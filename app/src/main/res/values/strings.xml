@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Catálogo de Autos</string>
+    <string name="login_title">Iniciar Sesión</string>
+    <string name="username_hint">Nombre de usuario</string>
+    <string name="password_hint">Contraseña</string>
+    <string name="login_button">Iniciar Sesión</string>
+    <string name="menu_title">Menú Principal</string>
+    <string name="agregar_auto">Agregar Nuevo Auto</string>
+    <string name="ver_inventario">Ver Inventario</string>
+    <string name="cerrar_sesion">Cerrar Sesión</string>
+
+</resources>
