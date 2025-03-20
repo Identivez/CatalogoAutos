@@ -16,6 +16,7 @@ class MenuActivity : AppCompatActivity() {
     private lateinit var tvBienvenida: TextView
     private lateinit var btnAgregarAuto: Button
     private lateinit var btnInventario: Button
+    private lateinit var btnCatalogo: Button // Nuevo botón para el catálogo
     private lateinit var btnLogout: Button
 
     private lateinit var viewModel: MenuViewModel
@@ -32,6 +33,7 @@ class MenuActivity : AppCompatActivity() {
         tvBienvenida = findViewById(R.id.tvBienvenida)
         btnAgregarAuto = findViewById(R.id.btnAgregarAuto)
         btnInventario = findViewById(R.id.btnInventario)
+        btnCatalogo = findViewById(R.id.btnCatalogo) // Referencia al nuevo botón
         btnLogout = findViewById(R.id.btnLogout)
 
         // Observar el usuario actual para mostrar mensaje de bienvenida
@@ -54,6 +56,11 @@ class MenuActivity : AppCompatActivity() {
 
         btnInventario.setOnClickListener {
             startActivity(Intent(this, InventarioActivity::class.java))
+        }
+
+        // Listener para el nuevo botón de catálogo
+        btnCatalogo.setOnClickListener {
+            startActivity(Intent(this, CatalogoAutosActivity::class.java))
         }
 
         btnLogout.setOnClickListener {

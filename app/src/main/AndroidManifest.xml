@@ -46,6 +46,11 @@
             android:name=".view.DetalleAutoActivity"
             android:exported="false" />
 
+        <!-- Nueva actividad para el catálogo de autos -->
+        <activity
+            android:name=".view.CatalogoAutosActivity"
+            android:exported="false" />
+
         <!-- Actividad principal original (puedes eliminarla si no la usarás) -->
         <activity
             android:name=".MainActivity"

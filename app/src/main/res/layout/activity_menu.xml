@@ -36,6 +36,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Ver Inventario"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp" />
+
+        <Button
+            android:id="@+id/btnCatalogo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Catálogo de Autos"
             android:padding="16dp" />
 
     </LinearLayout>

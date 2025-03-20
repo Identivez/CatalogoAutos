@@ -8,5 +8,22 @@
     <string name="agregar_auto">Agregar Nuevo Auto</string>
     <string name="ver_inventario">Ver Inventario</string>
     <string name="cerrar_sesion">Cerrar Sesión</string>
-
+    <string name="titulo_catalogo_autos">Catálogo de Autos</string>
+    <string name="hint_buscar_catalogo">Buscar por marca o modelo</string>
+    <string name="hint_precio_maximo">Precio máximo</string>
+    <string name="btn_limpiar_filtros">Limpiar filtros</string>
+    <string name="msg_no_autos_catalogo">No hay autos disponibles en el catálogo</string>
+    <string name="estado_auto_desc">Filtrar por estado del auto</string>
+    <string name="desc_foto_auto">Foto del auto</string>
+    <string name="desc_ver_detalles">Ver detalles</string>
+    <string name="etPrecioMaximo">Precio Maximo</string>
+    <string name="hint_anio">Año</string>
+    <string name="hint_precio_minimo">Precio mínimo</string>
+    <string name="hint_kilometraje_max">Kilometraje máximo</string>
+    <string name="combustible_desc">Tipo de combustible</string>
+    <string name="btn_ocultar_filtros">Ocultar filtros</string>
+    <string name="btn_mostrar_filtros">Mostrar filtros</string>
+    <string name="label_kilometraje">Kilometraje</string>
+    <string name="label_detalles">Detalles</string>
+    <string name="label_registrado">Registrado</string>
 </resources>
