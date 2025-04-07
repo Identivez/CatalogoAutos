@@ -1,17 +1,20 @@
 package com.example.catalogoautos.model
 
+import java.time.LocalDateTime
 import java.util.*
 
 data class Auto(
-    val id: String = UUID.randomUUID().toString(),
-    var marca: String = "",
+    val auto_id: Int = 0,
+    var n_serie: String = "",
+    var sku: String = "",
+    var marca_id: Int = 0,
     var modelo: String = "",
-    var año: Int = 0,
+    var anio: Int = 0,
     var color: String = "",
     var precio: Double = 0.0,
-    var estado: String = "Nuevo", // "Nuevo" o "Usado"
-    var kilometraje: Int = 0,
-    var fotoPath: String = "", // Añadimos este campo para la ruta de la foto
-    var detallesTecnicos: String = "",
-    val fechaRegistro: Date = Date()
+    var stock: Int = 0,
+    var descripcion: String = "",
+    var disponibilidad: Boolean = true,
+    val fecha_registro: LocalDateTime = LocalDateTime.now(),
+    var fecha_actualizacion: LocalDateTime = LocalDateTime.now()
 )

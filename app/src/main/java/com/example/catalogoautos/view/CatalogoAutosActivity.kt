@@ -5,13 +5,13 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.Spinner
 import android.widget.TextView
+import android.widget.ArrayAdapter
+import android.widget.AdapterView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -26,14 +26,15 @@ import kotlinx.coroutines.launch
 /**
  * Actividad principal para mostrar el catálogo de autos.
  *
- * Esta actividad muestra una lista de autos disponibles con opciones de filtrado básicas.
- * Los usuarios pueden buscar por marca o modelo, filtrar por estado y establecer un precio máximo.
+ * Esta actividad muestra una lista de autos disponibles con opciones de filtrado.
+ * Los usuarios pueden buscar por modelo, filtrar por disponibilidad, marca y establecer un precio máximo.
  */
 class CatalogoAutosActivity : AppCompatActivity() {
 
     // Referencias a elementos del layout
     private lateinit var etBuscar: EditText
-    private lateinit var spinnerEstado: Spinner
+    private lateinit var spinnerDisponibilidad: Spinner
+    private lateinit var spinnerMarca: Spinner
     private lateinit var etPrecioMaximo: EditText
     private lateinit var btnLimpiarFiltros: Button
     private lateinit var rvAutos: RecyclerView
@@ -45,6 +46,16 @@ class CatalogoAutosActivity : AppCompatActivity() {
 
     // Adaptador para la lista de autos
     private lateinit var adapter: CatalogoAutoAdapter
+
+    // Mapa temporal de marcas - en una implementación real, esto vendría de tu repositorio de marcas
+    private val marcasMap = mapOf(
+        0 to "Todas las marcas",
+        1 to "Toyota",
+        2 to "Honda",
+        3 to "Ford",
+        4 to "Chevrolet",
+        5 to "Nissan"
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,18 +81,25 @@ class CatalogoAutosActivity : AppCompatActivity() {
     private fun setupViews() {
         // Obtener referencias a las vistas
         etBuscar = findViewById(R.id.etBuscar)
-        spinnerEstado = findViewById(R.id.spinnerEstado)
+        spinnerDisponibilidad = findViewById(R.id.spinnerEstado) // Reusamos el spinner de estado
+        spinnerMarca = findViewById(R.id.spinnerMarca) // Este spinner debe agregarse al layout
         etPrecioMaximo = findViewById(R.id.etPrecioMaximo)
         btnLimpiarFiltros = findViewById(R.id.btnLimpiarFiltros)
         rvAutos = findViewById(R.id.rvAutos)
         tvEmpty = findViewById(R.id.tvEmpty)
         progressBar = findViewById(R.id.progressBar)
 
-        // Configurar el Spinner con opciones de estado
-        val estadoOptions = arrayOf("Todos", "Nuevo", "Usado")
-        val spinnerAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, estadoOptions)
-        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerEstado.adapter = spinnerAdapter
+        // Configurar el Spinner de disponibilidad
+        val disponibilidadOptions = arrayOf("Todos", "Disponible", "No disponible")
+        val disponibilidadAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, disponibilidadOptions)
+        disponibilidadAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerDisponibilidad.adapter = disponibilidadAdapter
+
+        // Configurar el Spinner de marcas
+        val marcasOptions = marcasMap.values.toTypedArray()
+        val marcasAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, marcasOptions)
+        marcasAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerMarca.adapter = marcasAdapter
 
         // Configurar el botón de limpiar filtros
         btnLimpiarFiltros.setOnClickListener {
@@ -90,10 +108,14 @@ class CatalogoAutosActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        adapter = CatalogoAutoAdapter { auto ->
-            // Cuando se hace clic en un auto, abrir la pantalla de detalles
-            abrirDetalleAuto(auto)
-        }
+        // Pasar el mapa de marcas al adaptador
+        adapter = CatalogoAutoAdapter(
+            onAutoClick = { auto ->
+                // Cuando se hace clic en un auto, abrir la pantalla de detalles
+                abrirDetalleAuto(auto)
+            },
+            marcasMap = marcasMap.filterKeys { it > 0 } // Excluimos la opción "Todas las marcas"
+        )
 
         rvAutos.layoutManager = LinearLayoutManager(this)
         rvAutos.adapter = adapter
@@ -103,30 +125,39 @@ class CatalogoAutosActivity : AppCompatActivity() {
         // Listener para el campo de búsqueda
         etBuscar.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-
             override fun afterTextChanged(s: Editable?) {
                 viewModel.setSearchQuery(s.toString())
             }
         })
 
-        // Listener para el spinner de estado
-        spinnerEstado.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+        // Listener para el spinner de disponibilidad
+        spinnerDisponibilidad.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                val estado = parent?.getItemAtPosition(position).toString()
-                viewModel.setEstadoFiltro(estado)
+                val disponibilidad = when (position) {
+                    0 -> null // Todos
+                    1 -> true // Disponible
+                    2 -> false // No disponible
+                    else -> null
+                }
+                viewModel.setDisponibilidadFiltro(disponibilidad)
             }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
 
+        // Listener para el spinner de marcas
+        spinnerMarca.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                val marcaId = if (position == 0) null else position
+                viewModel.setMarcaFiltro(marcaId)
+            }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
         // Listener para el precio máximo
         etPrecioMaximo.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-
             override fun afterTextChanged(s: Editable?) {
                 val precioStr = s.toString()
                 viewModel.setPrecioMaximo(if (precioStr.isNotEmpty()) precioStr.toDoubleOrNull() else null)
@@ -173,7 +204,8 @@ class CatalogoAutosActivity : AppCompatActivity() {
 
     private fun limpiarFiltros() {
         etBuscar.setText("")
-        spinnerEstado.setSelection(0) // "Todos"
+        spinnerDisponibilidad.setSelection(0) // "Todos"
+        spinnerMarca.setSelection(0) // "Todas las marcas"
         etPrecioMaximo.setText("")
         viewModel.limpiarFiltros()
     }
@@ -181,7 +213,7 @@ class CatalogoAutosActivity : AppCompatActivity() {
     private fun abrirDetalleAuto(auto: Auto) {
         // Abrir la actividad de detalle del auto
         val intent = Intent(this, DetalleAutoActivity::class.java).apply {
-            putExtra("auto_id", auto.id)
+            putExtra("auto_id", auto.auto_id) // Ahora usamos auto_id que es Int
             // Indicamos que viene del catálogo
             putExtra("from_catalogo", true)
         }

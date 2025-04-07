@@ -18,6 +18,15 @@ class InventarioViewModel(private val autoRepository: AutoRepository) : ViewMode
     // Término de búsqueda
     private val _searchQuery = MutableStateFlow("")
 
+    // Mapa temporal de marcas - en una implementación real, esto vendría de tu repositorio de marcas
+    private val marcasMap = mapOf(
+        1 to "Toyota",
+        2 to "Honda",
+        3 to "Ford",
+        4 to "Chevrolet",
+        5 to "Nissan"
+    )
+
     // Autos filtrados según el término de búsqueda
     val autos: StateFlow<List<Auto>> = combine(
         autoRepository.autos,
@@ -28,9 +37,12 @@ class InventarioViewModel(private val autoRepository: AutoRepository) : ViewMode
         val resultado = if (query.isBlank()) {
             listaAutos
         } else {
-            listaAutos.filter {
-                it.marca.contains(query, ignoreCase = true) ||
-                        it.modelo.contains(query, ignoreCase = true)
+            listaAutos.filter { auto ->
+                // Obtener el nombre de la marca usando el ID
+                val nombreMarca = marcasMap[auto.marca_id] ?: ""
+
+                nombreMarca.contains(query, ignoreCase = true) ||
+                        auto.modelo.contains(query, ignoreCase = true)
             }
         }
 
@@ -54,7 +66,7 @@ class InventarioViewModel(private val autoRepository: AutoRepository) : ViewMode
     }
 
     // Obtener auto por ID
-    fun obtenerAutoPorId(id: String): Auto? {
+    fun obtenerAutoPorId(id: Int): Auto? {
         val auto = autoRepository.obtenerAutoPorId(id)
         Log.d("InventarioViewModel", "Buscando auto ID: $id - Encontrado: ${auto != null}")
         return auto

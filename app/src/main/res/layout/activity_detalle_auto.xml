@@ -11,191 +11,241 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Detalles del Auto"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="16dp" />
-
         <ImageView
             android:id="@+id/ivFotoAuto"
             android:layout_width="match_parent"
             android:layout_height="200dp"
             android:scaleType="centerCrop"
             android:background="#EEEEEE"
-            android:layout_marginBottom="16dp"
-            android:contentDescription="Foto del auto" />
+            android:contentDescription="Foto del auto"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Información del Auto"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Nuevos campos del modelo: número de serie y SKU -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="4dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Número de Serie:"
+                android:textStyle="bold"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:id="@+id/tvNumeroSerie"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="BYD2025001234" />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
+            android:layout_marginBottom="4dp">
 
             <TextView
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:text="SKU:"
+                android:textStyle="bold"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:id="@+id/tvSku"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="BYD2025A1" />
+        </LinearLayout>
+
+        <!-- Campos existentes -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="4dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:text="Marca:"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:layout_marginEnd="8dp" />
 
             <TextView
                 android:id="@+id/tvMarca"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="2"
-                tools:text="Toyota" />
+                tools:text="BYD" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
+            android:layout_marginBottom="4dp">
 
             <TextView
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:text="Modelo:"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:layout_marginEnd="8dp" />
 
             <TextView
                 android:id="@+id/tvModelo"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="2"
-                tools:text="Corolla" />
+                tools:text="Dolphin" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
+            android:layout_marginBottom="4dp">
 
             <TextView
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:text="Año:"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:layout_marginEnd="8dp" />
 
             <TextView
-                android:id="@+id/tvAño"
-                android:layout_width="0dp"
+                android:id="@+id/tvAnio"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="2"
-                tools:text="2022" />
+                tools:text="2025" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
+            android:layout_marginBottom="4dp">
 
             <TextView
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:text="Color:"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:layout_marginEnd="8dp" />
 
             <TextView
                 android:id="@+id/tvColor"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="2"
-                tools:text="Rojo" />
+                tools:text="Azul Eléctrico" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
+            android:layout_marginBottom="4dp">
 
             <TextView
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:text="Precio:"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:layout_marginEnd="8dp" />
 
             <TextView
                 android:id="@+id/tvPrecio"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="2"
                 android:textColor="#4CAF50"
-                tools:text="$25,000.00" />
+                tools:text="$450,000.00" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
+            android:layout_marginBottom="4dp">
 
             <TextView
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Estado:"
-                android:textStyle="bold" />
+                android:text="Disponibilidad:"
+                android:textStyle="bold"
+                android:layout_marginEnd="8dp" />
 
             <TextView
                 android:id="@+id/tvEstado"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="2"
-                tools:text="Nuevo" />
+                tools:text="Disponible" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
+            android:layout_marginBottom="4dp">
 
             <TextView
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Kilometraje:"
-                android:textStyle="bold" />
+                android:text="Stock:"
+                android:textStyle="bold"
+                android:layout_marginEnd="8dp" />
 
             <TextView
-                android:id="@+id/tvKilometraje"
-                android:layout_width="0dp"
+                android:id="@+id/tvStock"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="2"
-                tools:text="0 km" />
+                tools:text="5 unidades" />
         </LinearLayout>
 
         <TextView
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Detalles Técnicos:"
+            android:text="Descripción:"
             android:textStyle="bold"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="4dp" />
 
         <TextView
-            android:id="@+id/tvDetallesTecnicos"
+            android:id="@+id/tvDescripcion"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            tools:text="Motor 1.8L, transmisión automática, aire acondicionado, vidrios eléctricos..." />
+            tools:text="Descripción detallada del vehículo con toda la información relevante sobre sus características." />
+
+        <TextView
+            android:id="@+id/tvFechaRegistro"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:layout_marginBottom="4dp"
+            tools:text="Fecha de registro: 01/01/2023" />
+
+        <TextView
+            android:id="@+id/tvFechaActualizacion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:layout_marginBottom="16dp"
+            tools:text="Última actualización: 15/01/2023" />
 
         <Button
             android:id="@+id/btnEditar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Editar Auto" />
-
     </LinearLayout>
 </ScrollView>

@@ -1,46 +1,56 @@
 package com.example.catalogoautos.viewmodel
 
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.catalogoautos.model.Auto
 import com.example.catalogoautos.repository.AutoRepository
+import java.util.*
 
-class AgregarAutoViewModel(private val autoRepository: AutoRepository) : ViewModel() {
+class AgregarAutoViewModel(private val repository: AutoRepository) : ViewModel() {
 
-    // Auto actual que estamos creando o editando
-    private var autoActual: Auto? = null
+    // Auto que se está editando o un nuevo auto en caso de inserción
+    private var autoActual: Auto = Auto(
+        auto_id = 0,
+        marca_id = 0,
+        modelo = "",
+        año = 0,
+        color = "",
+        precio = 0.0,
+        stock = 0,
+        descripcion = "",
+        disponibilidad = true,
+        fecha_registro = Date(),
+        fecha_actualizacion = Date()
+    )
 
-    // Método para configurar el auto a editar basado en su ID
-    fun setAutoParaEditar(id: String?) {
-        if (id != null) {
-            autoActual = autoRepository.obtenerAutoPorId(id)
-        } else {
-            autoActual = Auto() // Crear un nuevo auto vacío
+    // Establece el auto que se está editando basado en su ID
+    fun setAutoParaEditar(autoId: Int?) {
+        if (autoId != null && autoId > 0) {
+            val auto = repository.obtenerAutoPorId(autoId)
+            if (auto != null) {
+                autoActual = auto
+            }
         }
     }
 
-    // Método para obtener el auto actual
+    // Retorna el auto que se está editando o el auto vacío en caso de inserción
     fun getAutoActual(): Auto {
-        return autoActual ?: Auto()
+        return autoActual
     }
 
-    // Método para guardar o actualizar un auto en el repositorio
+    // Guarda el auto en el repositorio (inserción o actualización)
     fun guardarAuto(auto: Auto) {
-        Log.d("AgregarAutoViewModel", "Guardando auto. ID actual: ${autoActual?.id}, Nuevo ID: ${auto.id}")
-        val existingAuto = auto.id?.let { autoRepository.obtenerAutoPorId(it) }
-
-        if (existingAuto != null) {
-            Log.d("AgregarAutoViewModel", "Auto existente encontrado. Actualizando.")
-            autoRepository.actualizarAuto(auto)
+        if (auto.auto_id == 0) {
+            // Es un nuevo auto
+            repository.agregarAuto(auto)
         } else {
-            Log.d("AgregarAutoViewModel", "Auto no encontrado. Agregando nuevo.")
-            autoRepository.agregarAuto(auto)
+            // Es un auto existente
+            repository.actualizarAuto(auto)
         }
     }
 
-    // Factory para crear instancias de este ViewModel con sus dependencias
+    // Factory para crear el ViewModel con el repositorio
     class Factory(private val context: Context) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {

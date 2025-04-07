@@ -7,11 +7,12 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.ImageView
-import android.widget.RadioButton
-import android.widget.RadioGroup
+import android.widget.Spinner
 import android.widget.Toast
+import android.widget.ArrayAdapter
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
@@ -20,35 +21,38 @@ import com.example.catalogoautos.model.Auto
 import com.example.catalogoautos.viewmodel.AgregarAutoViewModel
 import java.io.File
 import java.io.FileOutputStream
+import java.util.Date
 
 class AgregarAutoActivity : AppCompatActivity() {
 
-    private lateinit var etMarca: EditText
+    private lateinit var spinnerMarca: Spinner
     private lateinit var etModelo: EditText
     private lateinit var etAño: EditText
     private lateinit var etColor: EditText
     private lateinit var etPrecio: EditText
-    private lateinit var rgEstado: RadioGroup
-    private lateinit var rbNuevo: RadioButton
-    private lateinit var rbUsado: RadioButton
-    private lateinit var etKilometraje: EditText
-    private lateinit var etDetallesTecnicos: EditText
+    private lateinit var etStock: EditText
+    private lateinit var etDescripcion: EditText
+    private lateinit var cbDisponibilidad: CheckBox
     private lateinit var btnSeleccionarFoto: Button
     private lateinit var ivFotoPreview: ImageView
     private lateinit var btnGuardar: Button
 
     private lateinit var viewModel: AgregarAutoViewModel
     private var selectedImageUri: Uri? = null
-    private var autoId: String? = null
+    private var autoId: Int? = null
     private var autoActual: Auto? = null
 
-    // Usar GetContent para seleccionar imágenes (maneja permisos internamente)
+
+    private val marcas = listOf("Seleccione una marca", "Toyota", "Honda", "Ford", "Chevrolet", "Nissan")
+    private val marcasIds = listOf(0, 1, 2, 3, 4, 5)
+
+
     private val selectImageLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
             try {
-                // Copiar la imagen seleccionada al almacenamiento interno
+
                 val imagePath = copiarImagenAAlmacenamientoInterno(it)
                 if (imagePath != null) {
                     selectedImageUri = Uri.fromFile(File(imagePath))
@@ -79,65 +83,50 @@ class AgregarAutoActivity : AppCompatActivity() {
             .get(AgregarAutoViewModel::class.java)
 
         // Obtener el ID del auto a editar si existe
-        autoId = intent.getStringExtra("AUTO_ID")
+        autoId = intent.getIntExtra("AUTO_ID", -1)
+        if (autoId == -1) autoId = null
         viewModel.setAutoParaEditar(autoId)
 
         // Configurar referencias a vistas
-        etMarca = findViewById(R.id.etMarca)
+        spinnerMarca = findViewById(R.id.spinnerMarca)
         etModelo = findViewById(R.id.etModelo)
         etAño = findViewById(R.id.etAño)
         etColor = findViewById(R.id.etColor)
         etPrecio = findViewById(R.id.etPrecio)
-        rgEstado = findViewById(R.id.rgEstado)
-        rbNuevo = findViewById(R.id.rbNuevo)
-        rbUsado = findViewById(R.id.rbUsado)
-        etKilometraje = findViewById(R.id.etKilometraje)
-        etDetallesTecnicos = findViewById(R.id.etDetallesTecnicos)
+        etStock = findViewById(R.id.etStock)
+        etDescripcion = findViewById(R.id.etDescripcion)
+        cbDisponibilidad = findViewById(R.id.cbDisponibilidad)
         btnSeleccionarFoto = findViewById(R.id.btnSeleccionarFoto)
         ivFotoPreview = findViewById(R.id.ivFotoPreview)
         btnGuardar = findViewById(R.id.btnGuardar)
+
+        // Configurar el adaptador para el spinner de marcas
+        val marcasAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, marcas)
+        marcasAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerMarca.adapter = marcasAdapter
 
         // Si estamos editando, llenar los campos con los datos existentes y cambiar el título
         val autoActual = viewModel.getAutoActual()
         if (autoId != null) {
             supportActionBar?.title = "Editar Auto"
 
-            etMarca.setText(autoActual.marca)
+            // Seleccionar la marca correspondiente en el spinner
+            val marcaIndex = marcasIds.indexOf(autoActual.marca_id)
+            if (marcaIndex >= 0) {
+                spinnerMarca.setSelection(marcaIndex)
+            }
+
             etModelo.setText(autoActual.modelo)
             etAño.setText(autoActual.año.toString())
             etColor.setText(autoActual.color)
             etPrecio.setText(autoActual.precio.toString())
+            etStock.setText(autoActual.stock.toString())
+            etDescripcion.setText(autoActual.descripcion)
+            cbDisponibilidad.isChecked = autoActual.disponibilidad
 
-            if (autoActual.estado == "Usado") {
-                rbUsado.isChecked = true
-            } else {
-                rbNuevo.isChecked = true
-            }
-
-            etKilometraje.setText(autoActual.kilometraje.toString())
-            etDetallesTecnicos.setText(autoActual.detallesTecnicos)
-
-            // Manejo mejorado de la carga de imágenes para prevenir errores
-            if (autoActual.fotoPath.isNotEmpty()) {
-                try {
-                    val file = File(autoActual.fotoPath)
-                    if (file.exists()) {
-                        // Si es una ruta de archivo local
-                        selectedImageUri = Uri.fromFile(file)
-                    } else {
-                        // Si es una URI de contenido
-                        selectedImageUri = Uri.parse(autoActual.fotoPath)
-                    }
-
-                    ivFotoPreview.setImageURI(selectedImageUri)
-                    ivFotoPreview.visibility = View.VISIBLE
-                    Log.d("AgregarAutoActivity", "Cargando imagen desde: ${autoActual.fotoPath}")
-                } catch (e: Exception) {
-                    Log.e("AgregarAutoActivity", "Error al cargar imagen: ${e.message}", e)
-                    // No mostrar la imagen si hay un error
-                    selectedImageUri = null
-                }
-            }
+            // Nota: El manejo de fotos ahora debería manejarse a través de la entidad Foto
+            // Este código debería actualizarse cuando implementes la gestión de fotos
+            // Por ahora, mantenemos la lógica básica para mostrar una visualización de la foto
         }
 
         // Configurar listeners de botones
@@ -172,46 +161,70 @@ class AgregarAutoActivity : AppCompatActivity() {
     private fun guardarAuto() {
         try {
             // Validar campos obligatorios
-            val marca = etMarca.text.toString().trim()
+            val marcaPos = spinnerMarca.selectedItemPosition
+            if (marcaPos <= 0) {
+                Toast.makeText(this, "Por favor, seleccione una marca", Toast.LENGTH_SHORT).show()
+                return
+            }
+
             val modelo = etModelo.text.toString().trim()
             val añoStr = etAño.text.toString().trim()
             val color = etColor.text.toString().trim()
             val precioStr = etPrecio.text.toString().trim()
+            val stockStr = etStock.text.toString().trim()
 
-            if (marca.isEmpty() || modelo.isEmpty() || añoStr.isEmpty() || color.isEmpty() || precioStr.isEmpty()) {
+            if (modelo.isEmpty() || añoStr.isEmpty() || color.isEmpty() || precioStr.isEmpty() || stockStr.isEmpty()) {
                 Toast.makeText(this, "Por favor, complete todos los campos obligatorios", Toast.LENGTH_SHORT).show()
                 return
             }
 
             // Convertir tipos
+            val marca_id = marcasIds[marcaPos]
             val año = añoStr.toInt()
             val precio = precioStr.toDouble()
-            val estado = if (rbNuevo.isChecked) "Nuevo" else "Usado"
-            val kilometraje = etKilometraje.text.toString().trim().let {
-                if (it.isEmpty()) 0 else it.toInt()
-            }
-            val detallesTecnicos = etDetallesTecnicos.text.toString().trim()
-            val fotoPath = selectedImageUri?.toString() ?: ""
+            val stock = stockStr.toInt()
+            val descripcion = etDescripcion.text.toString().trim()
+            val disponibilidad = cbDisponibilidad.isChecked
+
+            // Fecha actual para actualización
+            val fechaActualizacion = Date()
 
             // Registrar información para diagnóstico
-            Log.d("AgregarAutoActivity", "Guardando auto: $marca $modelo ($año)")
+            Log.d("AgregarAutoActivity", "Guardando auto: $marca_id - $modelo ($año)")
 
             // Crear o actualizar el auto
-            val auto = viewModel.getAutoActual().copy(
-                marca = marca,
-                modelo = modelo,
-                año = año,
-                color = color,
-                precio = precio,
-                estado = estado,
-                kilometraje = kilometraje,
-                detallesTecnicos = detallesTecnicos,
-                fotoPath = fotoPath
-            )
+            val auto = if (autoId == null) {
+                // Nuevo auto
+                Auto(
+                    marca_id = marca_id,
+                    modelo = modelo,
+                    año = año,
+                    color = color,
+                    precio = precio,
+                    stock = stock,
+                    descripcion = descripcion,
+                    disponibilidad = disponibilidad,
+                    fecha_registro = Date(),
+                    fecha_actualizacion = fechaActualizacion
+                )
+            } else {
+                // Auto existente
+                viewModel.getAutoActual().copy(
+                    marca_id = marca_id,
+                    modelo = modelo,
+                    año = año,
+                    color = color,
+                    precio = precio,
+                    stock = stock,
+                    descripcion = descripcion,
+                    disponibilidad = disponibilidad,
+                    fecha_actualizacion = fechaActualizacion
+                )
+            }
 
             // Guardar el auto y registrar el resultado
             viewModel.guardarAuto(auto)
-            Log.d("AgregarAutoActivity", "Auto guardado con ID: ${auto.id}")
+            Log.d("AgregarAutoActivity", "Auto guardado con ID: ${auto.auto_id}")
 
             Toast.makeText(
                 this,

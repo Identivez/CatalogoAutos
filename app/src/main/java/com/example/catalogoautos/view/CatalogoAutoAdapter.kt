@@ -18,11 +18,13 @@ import java.util.Locale
 /**
  * Adaptador mejorado para la lista de autos en el catálogo.
  *
- * Este adaptador muestra información más detallada sobre cada auto,
- * incluyendo kilometraje, detalles técnicos y fecha de registro.
+ * Este adaptador muestra información detallada sobre cada auto,
+ * incluyendo marca, modelo, año, color, precio, stock, descripción y disponibilidad.
  */
-class CatalogoAutoAdapter(private val onAutoClick: (Auto) -> Unit) :
-    ListAdapter<Auto, CatalogoAutoAdapter.AutoViewHolder>(AutoDiffCallback()) {
+class CatalogoAutoAdapter(
+    private val onAutoClick: (Auto) -> Unit,
+    private val marcasMap: Map<Int, String> = emptyMap() // Mapa de IDs de marcas a nombres
+) : ListAdapter<Auto, CatalogoAutoAdapter.AutoViewHolder>(AutoDiffCallback()) {
 
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
@@ -34,26 +36,29 @@ class CatalogoAutoAdapter(private val onAutoClick: (Auto) -> Unit) :
 
     override fun onBindViewHolder(holder: AutoViewHolder, position: Int) {
         val auto = getItem(position)
-        holder.bind(auto, dateFormat, onAutoClick)
+        holder.bind(auto, dateFormat, onAutoClick, marcasMap)
     }
 
     class AutoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         // Referencias a vistas básicas
         private val ivAutoFoto: ImageView = itemView.findViewById(R.id.ivAutoFoto)
         private val tvMarcaModelo: TextView = itemView.findViewById(R.id.tvMarcaModelo)
-        private val tvAnoEstado: TextView = itemView.findViewById(R.id.tvAnoEstado)
+        private val tvAnoColor: TextView = itemView.findViewById(R.id.tvAnoEstado) // Reusamos este campo
         private val tvColor: TextView = itemView.findViewById(R.id.tvColor)
         private val tvPrecio: TextView = itemView.findViewById(R.id.tvPrecio)
 
         // Referencias a vistas de detalles adicionales
-        private val tvKilometraje: TextView = itemView.findViewById(R.id.tvKilometraje)
-        private val tvDetallesTecnicos: TextView = itemView.findViewById(R.id.tvDetallesTecnicos)
+        private val tvStock: TextView = itemView.findViewById(R.id.tvKilometraje) // Reusamos este campo
+        private val tvDescripcion: TextView = itemView.findViewById(R.id.tvDetallesTecnicos) // Reusamos este campo
         private val tvFechaRegistro: TextView = itemView.findViewById(R.id.tvFechaRegistro)
 
-        fun bind(auto: Auto, dateFormat: SimpleDateFormat, onAutoClick: (Auto) -> Unit) {
+        fun bind(auto: Auto, dateFormat: SimpleDateFormat, onAutoClick: (Auto) -> Unit, marcasMap: Map<Int, String>) {
+            // Obtener el nombre de la marca desde el mapa
+            val nombreMarca = marcasMap[auto.marca_id] ?: "Marca ${auto.marca_id}"
+
             // Configurar información básica
-            tvMarcaModelo.text = "${auto.marca} ${auto.modelo}"
-            tvAnoEstado.text = "${auto.año} • ${auto.estado}"
+            tvMarcaModelo.text = "$nombreMarca ${auto.modelo}"
+            tvAnoColor.text = "${auto.año} • ${if (auto.disponibilidad) "Disponible" else "No disponible"}"
             tvColor.text = "Color: ${auto.color}"
 
             // Formatear precio como moneda
@@ -61,28 +66,18 @@ class CatalogoAutoAdapter(private val onAutoClick: (Auto) -> Unit) :
             tvPrecio.text = formatoPrecio.format(auto.precio)
 
             // Configurar detalles adicionales
-            tvKilometraje.text = if (auto.kilometraje > 0)
-                "${formatoNumeroConSeparadores(auto.kilometraje)} km"
+            tvStock.text = "Stock: ${formatoNumeroConSeparadores(auto.stock)}"
+
+            tvDescripcion.text = if (auto.descripcion.isNotEmpty())
+                auto.descripcion
             else
-                "0 km"
+                "Sin descripción"
 
-            tvDetallesTecnicos.text = if (auto.detallesTecnicos.isNotEmpty())
-                auto.detallesTecnicos
-            else
-                "No disponible"
+            tvFechaRegistro.text = "Registrado: ${dateFormat.format(auto.fecha_registro)}"
 
-            tvFechaRegistro.text = dateFormat.format(auto.fechaRegistro)
-
-            // Cargar imagen del auto
-            if (auto.fotoPath.isNotEmpty()) {
-                try {
-                    ivAutoFoto.setImageURI(Uri.parse(auto.fotoPath))
-                } catch (e: Exception) {
-                    ivAutoFoto.setImageResource(R.drawable.ic_launcher_foreground)
-                }
-            } else {
-                ivAutoFoto.setImageResource(R.drawable.ic_launcher_foreground)
-            }
+            // La imagen se manejará a través de la entidad Foto en una implementación completa
+            // Por ahora usamos un placeholder
+            ivAutoFoto.setImageResource(R.drawable.ic_launcher_foreground)
 
             // Configurar clic en todo el item para ver detalles
             itemView.setOnClickListener {
@@ -98,11 +93,17 @@ class CatalogoAutoAdapter(private val onAutoClick: (Auto) -> Unit) :
 
     class AutoDiffCallback : DiffUtil.ItemCallback<Auto>() {
         override fun areItemsTheSame(oldItem: Auto, newItem: Auto): Boolean {
-            return oldItem.id == newItem.id
+            return oldItem.auto_id == newItem.auto_id
         }
 
         override fun areContentsTheSame(oldItem: Auto, newItem: Auto): Boolean {
             return oldItem == newItem
         }
+    }
+
+    // Método para actualizar el mapa de marcas si se cargan después
+    fun actualizarMarcas(marcas: Map<Int, String>) {
+        // Este método sería implementado si necesitas actualizar las marcas después
+        // de inicializar el adaptador
     }
 }

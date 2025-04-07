@@ -67,11 +67,24 @@ class AutoRepository private constructor(private val context: Context) {
         }
     }
 
+    // Función para generar un nuevo ID para un auto
+    private fun generarNuevoId(): Int {
+        val maxId = _autos.value.maxOfOrNull { it.auto_id } ?: 0
+        return maxId + 1
+    }
+
     // Función para agregar un nuevo auto
     fun agregarAuto(auto: Auto) {
-        Log.d(TAG, "Agregando auto: ${auto.marca} ${auto.modelo}")
+        // Asignar un nuevo ID si es 0 (valor por defecto)
+        val autoConId = if (auto.auto_id == 0) {
+            auto.copy(auto_id = generarNuevoId())
+        } else {
+            auto
+        }
+
+        Log.d(TAG, "Agregando auto: ID=${autoConId.auto_id}, Modelo=${autoConId.modelo}")
         _autos.update { currentList ->
-            val newList = currentList + auto
+            val newList = currentList + autoConId
             newList
         }
         guardarAutosEnPreferences()
@@ -79,18 +92,18 @@ class AutoRepository private constructor(private val context: Context) {
 
     // Función para actualizar un auto existente
     fun actualizarAuto(auto: Auto) {
-        Log.d(TAG, "Actualizando auto con ID: ${auto.id}")
+        Log.d(TAG, "Actualizando auto con ID: ${auto.auto_id}")
         _autos.update { currentList ->
             currentList.map {
-                if (it.id == auto.id) auto else it
+                if (it.auto_id == auto.auto_id) auto else it
             }
         }
         guardarAutosEnPreferences()
     }
 
     // Función para obtener un auto por su ID
-    fun obtenerAutoPorId(id: String): Auto? {
-        val auto = _autos.value.find { it.id == id }
+    fun obtenerAutoPorId(id: Int): Auto? {
+        val auto = _autos.value.find { it.auto_id == id }
         Log.d(TAG, "Buscando auto con ID: $id. Encontrado: ${auto != null}")
         return auto
     }

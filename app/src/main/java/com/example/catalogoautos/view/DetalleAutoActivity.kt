@@ -1,7 +1,6 @@
 package com.example.catalogoautos.view
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
@@ -25,15 +24,25 @@ class DetalleAutoActivity : AppCompatActivity() {
     private lateinit var tvAño: TextView
     private lateinit var tvColor: TextView
     private lateinit var tvPrecio: TextView
-    private lateinit var tvEstado: TextView
-    private lateinit var tvKilometraje: TextView
-    private lateinit var tvDetallesTecnicos: TextView
+    private lateinit var tvDisponibilidad: TextView
+    private lateinit var tvStock: TextView
+    private lateinit var tvDescripcion: TextView
     private lateinit var tvFechaRegistro: TextView
+    private lateinit var tvFechaActualizacion: TextView
     private lateinit var btnEditar: Button
 
     private lateinit var viewModel: DetalleAutoViewModel
-    private var autoId: String? = null
+    private var autoId: Int = -1
     private var fromCatalogo: Boolean = false
+
+    // Mapa temporal de marcas - en una implementación real, esto vendría de tu repositorio de marcas
+    private val marcasMap = mapOf(
+        1 to "Toyota",
+        2 to "Honda",
+        3 to "Ford",
+        4 to "Chevrolet",
+        5 to "Nissan"
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,10 +56,13 @@ class DetalleAutoActivity : AppCompatActivity() {
             .get(DetalleAutoViewModel::class.java)
 
         // Obtener ID del auto a mostrar y verificar si viene del catálogo
-        autoId = intent.getStringExtra("auto_id") ?: intent.getStringExtra("AUTO_ID")
+        autoId = intent.getIntExtra("auto_id", -1)
+        if (autoId == -1) {
+            autoId = intent.getIntExtra("AUTO_ID", -1)
+        }
         fromCatalogo = intent.getBooleanExtra("from_catalogo", false)
 
-        if (autoId == null) {
+        if (autoId == -1) {
             Toast.makeText(this, "Error: No se pudo encontrar el auto", Toast.LENGTH_SHORT).show()
             finish()
             return
@@ -82,13 +94,14 @@ class DetalleAutoActivity : AppCompatActivity() {
         tvAño = findViewById(R.id.tvAño)
         tvColor = findViewById(R.id.tvColor)
         tvPrecio = findViewById(R.id.tvPrecio)
-        tvEstado = findViewById(R.id.tvEstado)
-        tvKilometraje = findViewById(R.id.tvKilometraje)
-        tvDetallesTecnicos = findViewById(R.id.tvDetallesTecnicos)
+        tvDisponibilidad = findViewById(R.id.tvEstado) // Reusamos esta vista
+        tvStock = findViewById(R.id.tvKilometraje) // Reusamos esta vista
+        tvDescripcion = findViewById(R.id.tvDetallesTecnicos) // Reusamos esta vista
         btnEditar = findViewById(R.id.btnEditar)
 
-        // Buscar la vista para fecha de registro si existe en el layout
+        // Buscar las vistas para fecha de registro y actualización si existen en el layout
         tvFechaRegistro = findViewById(R.id.tvFechaRegistro) ?: TextView(this)
+        tvFechaActualizacion = findViewById(R.id.tvFechaActualizacion) ?: TextView(this)
     }
 
     private fun configurarModoVisualizacion() {
@@ -100,21 +113,15 @@ class DetalleAutoActivity : AppCompatActivity() {
     }
 
     private fun cargarDatosAuto() {
-        val auto = viewModel.obtenerAuto(autoId!!)
+        val auto = viewModel.obtenerAuto(autoId)
         if (auto != null) {
-            // Cargar imagen si existe
-            if (auto.fotoPath.isNotEmpty()) {
-                try {
-                    ivFotoAuto.setImageURI(Uri.parse(auto.fotoPath))
-                } catch (e: Exception) {
-                    ivFotoAuto.setImageResource(R.drawable.ic_launcher_foreground)
-                }
-            } else {
-                ivFotoAuto.setImageResource(R.drawable.ic_launcher_foreground)
-            }
+            // Para la imagen, en una implementación completa buscarías la foto principal
+            // usando la relación con la entidad Foto
+            // Por ahora mostramos una imagen predeterminada
+            ivFotoAuto.setImageResource(R.drawable.ic_launcher_foreground)
 
             // Mostrar datos del auto
-            tvMarca.text = auto.marca
+            tvMarca.text = marcasMap[auto.marca_id] ?: "Marca ID: ${auto.marca_id}"
             tvModelo.text = auto.modelo
             tvAño.text = auto.año.toString()
             tvColor.text = auto.color
@@ -123,14 +130,16 @@ class DetalleAutoActivity : AppCompatActivity() {
             val formatoPrecio = NumberFormat.getCurrencyInstance(Locale("es", "MX"))
             tvPrecio.text = formatoPrecio.format(auto.precio)
 
-            tvEstado.text = auto.estado
-            tvKilometraje.text = "${formatoNumeroConSeparadores(auto.kilometraje)} km"
-            tvDetallesTecnicos.text = auto.detallesTecnicos
+            // Mostrar disponibilidad y stock (usando las vistas reutilizadas)
+            tvDisponibilidad.text = if (auto.disponibilidad) "Disponible" else "No disponible"
+            tvStock.text = "Stock: ${formatoNumeroConSeparadores(auto.stock)} unidades"
+            tvDescripcion.text = auto.descripcion
 
-            // Mostrar fecha de registro si la vista existe
+            // Mostrar fechas si las vistas existen
             try {
-                val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-                tvFechaRegistro.text = dateFormat.format(auto.fechaRegistro)
+                val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+                tvFechaRegistro.text = "Fecha de registro: ${dateFormat.format(auto.fecha_registro)}"
+                tvFechaActualizacion.text = "Última actualización: ${dateFormat.format(auto.fecha_actualizacion)}"
             } catch (e: Exception) {
                 // La vista puede no existir, no hacemos nada en ese caso
             }
@@ -157,7 +166,7 @@ class DetalleAutoActivity : AppCompatActivity() {
     // Actualizar datos cuando se regresa de editar
     override fun onResume() {
         super.onResume()
-        if (!fromCatalogo) {
+        if (!fromCatalogo && autoId != -1) {
             // Solo recargamos los datos si no estamos en modo visualización del catálogo
             cargarDatosAuto()
         }
