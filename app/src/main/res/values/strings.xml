@@ -1,9 +1,5 @@
 <resources>
-    <string name="app_name">Catálogo de Autos</string>
-    <string name="login_title">Iniciar Sesión</string>
-    <string name="username_hint">Nombre de usuario</string>
-    <string name="password_hint">Contraseña</string>
-    <string name="login_button">Iniciar Sesión</string>
+
     <string name="menu_title">Menú Principal</string>
     <string name="agregar_auto">Agregar Nuevo Auto</string>
     <string name="ver_inventario">Ver Inventario</string>
@@ -26,4 +22,21 @@
     <string name="label_kilometraje">Kilometraje</string>
     <string name="label_detalles">Detalles</string>
     <string name="label_registrado">Registrado</string>
+
+
+    <string name="app_name">BYD Catálogo</string>
+    <string name="catalog_title">Catálogo de Vehículos Eléctricos</string>
+    <string name="username_hint">Nombre de usuario</string>
+    <string name="password_hint">Contraseña</string>
+    <string name="login_button">Iniciar Sesión</string>
+    <string name="byd_logo">Logo de BYD</string>
+    <string name="byd_car_image">Vehículo BYD</string>
+    <string name="byd_slogan">Build Your Dreams - Innovación en movilidad eléctrica</string>
+    <string name="login_error">Usuario o contraseña incorrectos</string>
+    <string name="login_error_empty_fields">Por favor, complete todos los campos</string>
+
+    <!-- Nuevos strings para accesibilidad -->
+    <string name="icon_user">Icono de usuario</string>
+    <string name="icon_password">Icono de contraseña</string>
+    <string name="toggle_password_visibility">Mostrar u ocultar contraseña</string>
 </resources>

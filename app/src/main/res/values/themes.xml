@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.CatalogoAutos" parent="Theme.AppCompat.Light.DarkActionBar">
+    <style name="Theme.CatalogoAutos" parent="Theme.MaterialComponents.Light.DarkActionBar">
         <!-- Colores, fuentes y otros atributos -->
         <item name="colorPrimary">@color/purple_500</item>
         <item name="colorPrimaryDark">@color/purple_700</item>

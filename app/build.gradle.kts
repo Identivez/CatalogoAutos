@@ -62,4 +62,8 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("com.google.android.material:material:1.5.0")
+    implementation("androidx.cardview:cardview:1.0.0")
+    implementation ("androidx.gridlayout:gridlayout:1.0.0")
 }

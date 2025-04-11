@@ -13,12 +13,15 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.catalogoautos.R
 import com.example.catalogoautos.model.Auto
 import java.text.NumberFormat
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 class AutoAdapter(
-    private val listener: OnAutoClickListener,
-    private val marcasMap: Map<Int, String> = emptyMap() // Mapa de IDs de marcas a nombres
+    private val listener: OnAutoClickListener
 ) : ListAdapter<Auto, AutoAdapter.AutoViewHolder>(AutoDiffCallback()) {
+
+    // Constante para el nombre de la marca BYD
+    private val MARCA_BYD = "BYD"
 
     interface OnAutoClickListener {
         fun onAutoClick(auto: Auto)
@@ -33,30 +36,46 @@ class AutoAdapter(
 
     override fun onBindViewHolder(holder: AutoViewHolder, position: Int) {
         val auto = getItem(position)
-        holder.bind(auto, listener, marcasMap)
+        holder.bind(auto, listener, MARCA_BYD)
     }
 
     class AutoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val ivAutoFoto: ImageView = itemView.findViewById(R.id.ivAutoFoto)
         private val tvMarcaModelo: TextView = itemView.findViewById(R.id.tvMarcaModelo)
-        private val tvAño: TextView = itemView.findViewById(R.id.tvAño)
+        private val tvSku: TextView = itemView.findViewById(R.id.tvSku)
+        private val tvAnio: TextView = itemView.findViewById(R.id.tvAnio)
+        private val tvColor: TextView = itemView.findViewById(R.id.tvColor)
         private val tvPrecio: TextView = itemView.findViewById(R.id.tvPrecio)
         private val tvDisponibilidad: TextView = itemView.findViewById(R.id.tvDisponibilidad)
         private val tvStock: TextView = itemView.findViewById(R.id.tvStock)
         private val ibEditar: ImageButton = itemView.findViewById(R.id.ibEditar)
 
-        fun bind(auto: Auto, listener: OnAutoClickListener, marcasMap: Map<Int, String>) {
-            // Obtener el nombre de la marca desde el mapa usando el marca_id
-            val nombreMarca = marcasMap[auto.marca_id] ?: "Marca ${auto.marca_id}"
-            tvMarcaModelo.text = "$nombreMarca ${auto.modelo}"
-            tvAño.text = auto.año.toString()
+        fun bind(auto: Auto, listener: OnAutoClickListener, marcaNombre: String) {
+            // Configurar información básica del auto
+            tvMarcaModelo.text = "$marcaNombre ${auto.modelo}"
+            tvSku.text = "SKU: ${auto.sku}"
+            tvAnio.text = auto.anio.toString()
+            tvColor.text = auto.color
 
             // Formatear precio como moneda
             val formatoPrecio = NumberFormat.getCurrencyInstance(Locale("es", "MX"))
             tvPrecio.text = formatoPrecio.format(auto.precio)
 
-            // Mostrar disponibilidad y stock
-            tvDisponibilidad.text = if (auto.disponibilidad) "Disponible" else "No disponible"
+            // Configurar disponibilidad con estilo visual adecuado
+            if (auto.disponibilidad) {
+                tvDisponibilidad.text = "Disponible"
+                tvDisponibilidad.setBackgroundResource(R.drawable.disponible_badge)
+                // Cambiamos la forma de acceder al color
+                tvDisponibilidad.setTextColor(itemView.context.getResources().getColor(R.color.green, itemView.context.theme))
+            } else {
+                tvDisponibilidad.text = "No disponible"
+                // Cambiamos al drawable genérico, deberás crear este drawable
+                tvDisponibilidad.setBackgroundResource(R.drawable.badge_background)
+                // Cambiamos la forma de acceder al color
+                tvDisponibilidad.setTextColor(itemView.context.getResources().getColor(R.color.red, itemView.context.theme))
+            }
+
+            // Mostrar información de stock
             tvStock.text = "Stock: ${auto.stock}"
 
             // Para las fotos, usaremos una imagen predeterminada por ahora
@@ -80,13 +99,18 @@ class AutoAdapter(
         }
 
         override fun areContentsTheSame(oldItem: Auto, newItem: Auto): Boolean {
-            return oldItem == newItem
+            // Comparación completa incluyendo los nuevos campos
+            return oldItem.auto_id == newItem.auto_id &&
+                    oldItem.n_serie == newItem.n_serie &&
+                    oldItem.sku == newItem.sku &&
+                    oldItem.marca_id == newItem.marca_id &&
+                    oldItem.modelo == newItem.modelo &&
+                    oldItem.anio == newItem.anio &&
+                    oldItem.color == newItem.color &&
+                    oldItem.precio == newItem.precio &&
+                    oldItem.stock == newItem.stock &&
+                    oldItem.descripcion == newItem.descripcion &&
+                    oldItem.disponibilidad == newItem.disponibilidad
         }
-    }
-
-    // Método para actualizar el mapa de marcas
-    fun actualizarMarcas(marcas: Map<Int, String>) {
-        // Este método podría usarse para actualizar el mapa de marcas
-        // si las marcas se cargan después de inicializar el adaptador
     }
 }

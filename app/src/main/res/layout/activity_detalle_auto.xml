@@ -247,5 +247,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Editar Auto" />
+        <!-- Agregar después del botón de editar en activity_detalle_auto.xml -->
+        <Button
+            android:id="@+id/btnCambiarDisponibilidad"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Cambiar Disponibilidad" />
     </LinearLayout>
 </ScrollView>

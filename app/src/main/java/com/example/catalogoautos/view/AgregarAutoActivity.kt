@@ -10,9 +10,8 @@ import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.ImageView
-import android.widget.Spinner
+import android.widget.TextView
 import android.widget.Toast
-import android.widget.ArrayAdapter
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
@@ -21,13 +20,16 @@ import com.example.catalogoautos.model.Auto
 import com.example.catalogoautos.viewmodel.AgregarAutoViewModel
 import java.io.File
 import java.io.FileOutputStream
-import java.util.Date
+import java.time.LocalDateTime
 
 class AgregarAutoActivity : AppCompatActivity() {
 
-    private lateinit var spinnerMarca: Spinner
+    // Declaración de los elementos de la interfaz
+    private lateinit var etNumeroSerie: EditText
+    private lateinit var etSku: EditText
+    private lateinit var tvMarcaSeleccionada: TextView
     private lateinit var etModelo: EditText
-    private lateinit var etAño: EditText
+    private lateinit var etAnio: EditText
     private lateinit var etColor: EditText
     private lateinit var etPrecio: EditText
     private lateinit var etStock: EditText
@@ -40,19 +42,15 @@ class AgregarAutoActivity : AppCompatActivity() {
     private lateinit var viewModel: AgregarAutoViewModel
     private var selectedImageUri: Uri? = null
     private var autoId: Int? = null
-    private var autoActual: Auto? = null
 
-
-    private val marcas = listOf("Seleccione una marca", "Toyota", "Honda", "Ford", "Chevrolet", "Nissan")
-    private val marcasIds = listOf(0, 1, 2, 3, 4, 5)
-
+    // Constante para la marca BYD
+    private val MARCA_BYD_ID = 1
 
     private val selectImageLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
             try {
-
                 val imagePath = copiarImagenAAlmacenamientoInterno(it)
                 if (imagePath != null) {
                     selectedImageUri = Uri.fromFile(File(imagePath))
@@ -72,6 +70,7 @@ class AgregarAutoActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        supportActionBar?.hide()
         setContentView(R.layout.activity_agregar_auto)
 
         // Configurar barra de acción
@@ -88,9 +87,11 @@ class AgregarAutoActivity : AppCompatActivity() {
         viewModel.setAutoParaEditar(autoId)
 
         // Configurar referencias a vistas
-        spinnerMarca = findViewById(R.id.spinnerMarca)
+        etNumeroSerie = findViewById(R.id.etNumeroSerie)
+        etSku = findViewById(R.id.etSku)
+        tvMarcaSeleccionada = findViewById(R.id.tvMarcaSeleccionada)
         etModelo = findViewById(R.id.etModelo)
-        etAño = findViewById(R.id.etAño)
+        etAnio = findViewById(R.id.etAnio)
         etColor = findViewById(R.id.etColor)
         etPrecio = findViewById(R.id.etPrecio)
         etStock = findViewById(R.id.etStock)
@@ -100,24 +101,19 @@ class AgregarAutoActivity : AppCompatActivity() {
         ivFotoPreview = findViewById(R.id.ivFotoPreview)
         btnGuardar = findViewById(R.id.btnGuardar)
 
-        // Configurar el adaptador para el spinner de marcas
-        val marcasAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, marcas)
-        marcasAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerMarca.adapter = marcasAdapter
+        // Establecer BYD como marca predeterminada
+        tvMarcaSeleccionada.text = "BYD"
 
         // Si estamos editando, llenar los campos con los datos existentes y cambiar el título
         val autoActual = viewModel.getAutoActual()
         if (autoId != null) {
             supportActionBar?.title = "Editar Auto"
 
-            // Seleccionar la marca correspondiente en el spinner
-            val marcaIndex = marcasIds.indexOf(autoActual.marca_id)
-            if (marcaIndex >= 0) {
-                spinnerMarca.setSelection(marcaIndex)
-            }
-
+            // Llenar campos con los valores del auto a editar
+            etNumeroSerie.setText(autoActual.n_serie)
+            etSku.setText(autoActual.sku)
             etModelo.setText(autoActual.modelo)
-            etAño.setText(autoActual.año.toString())
+            etAnio.setText(autoActual.anio.toString())
             etColor.setText(autoActual.color)
             etPrecio.setText(autoActual.precio.toString())
             etStock.setText(autoActual.stock.toString())
@@ -126,7 +122,6 @@ class AgregarAutoActivity : AppCompatActivity() {
 
             // Nota: El manejo de fotos ahora debería manejarse a través de la entidad Foto
             // Este código debería actualizarse cuando implementes la gestión de fotos
-            // Por ahora, mantenemos la lógica básica para mostrar una visualización de la foto
         }
 
         // Configurar listeners de botones
@@ -161,58 +156,126 @@ class AgregarAutoActivity : AppCompatActivity() {
     private fun guardarAuto() {
         try {
             // Validar campos obligatorios
-            val marcaPos = spinnerMarca.selectedItemPosition
-            if (marcaPos <= 0) {
-                Toast.makeText(this, "Por favor, seleccione una marca", Toast.LENGTH_SHORT).show()
-                return
-            }
-
+            val numeroSerie = etNumeroSerie.text.toString().trim()
+            val sku = etSku.text.toString().trim()
             val modelo = etModelo.text.toString().trim()
-            val añoStr = etAño.text.toString().trim()
+            val anioStr = etAnio.text.toString().trim()
             val color = etColor.text.toString().trim()
             val precioStr = etPrecio.text.toString().trim()
             val stockStr = etStock.text.toString().trim()
 
-            if (modelo.isEmpty() || añoStr.isEmpty() || color.isEmpty() || precioStr.isEmpty() || stockStr.isEmpty()) {
-                Toast.makeText(this, "Por favor, complete todos los campos obligatorios", Toast.LENGTH_SHORT).show()
+            // Validación de campos obligatorios
+            if (numeroSerie.isEmpty()) {
+                Toast.makeText(this, "Por favor, ingrese el número de serie", Toast.LENGTH_SHORT).show()
+                etNumeroSerie.requestFocus()
+                return
+            }
+
+            if (sku.isEmpty()) {
+                Toast.makeText(this, "Por favor, ingrese el SKU", Toast.LENGTH_SHORT).show()
+                etSku.requestFocus()
+                return
+            }
+
+            if (sku.length > 10) {
+                Toast.makeText(this, "El SKU no puede tener más de 10 caracteres", Toast.LENGTH_SHORT).show()
+                etSku.requestFocus()
+                return
+            }
+
+            if (modelo.isEmpty()) {
+                Toast.makeText(this, "Por favor, ingrese el modelo", Toast.LENGTH_SHORT).show()
+                etModelo.requestFocus()
+                return
+            }
+
+            if (anioStr.isEmpty()) {
+                Toast.makeText(this, "Por favor, ingrese el año", Toast.LENGTH_SHORT).show()
+                etAnio.requestFocus()
+                return
+            }
+
+            if (color.isEmpty()) {
+                Toast.makeText(this, "Por favor, ingrese el color", Toast.LENGTH_SHORT).show()
+                etColor.requestFocus()
+                return
+            }
+
+            if (precioStr.isEmpty()) {
+                Toast.makeText(this, "Por favor, ingrese el precio", Toast.LENGTH_SHORT).show()
+                etPrecio.requestFocus()
+                return
+            }
+
+            if (stockStr.isEmpty()) {
+                Toast.makeText(this, "Por favor, ingrese el stock", Toast.LENGTH_SHORT).show()
+                etStock.requestFocus()
                 return
             }
 
             // Convertir tipos
-            val marca_id = marcasIds[marcaPos]
-            val año = añoStr.toInt()
+            val anio = anioStr.toInt()
+
+            // Validar el año según la restricción de la base de datos
+            val currentYear = LocalDateTime.now().year
+            if (anio <= 1900 || anio > currentYear) {
+                Toast.makeText(this, "El año debe estar entre 1901 y $currentYear", Toast.LENGTH_SHORT).show()
+                etAnio.requestFocus()
+                return
+            }
+
             val precio = precioStr.toDouble()
+
+            // Validar precio según la restricción de la base de datos
+            if (precio < 0) {
+                Toast.makeText(this, "El precio no puede ser negativo", Toast.LENGTH_SHORT).show()
+                etPrecio.requestFocus()
+                return
+            }
+
             val stock = stockStr.toInt()
+
+            // Validar stock según la restricción de la base de datos
+            if (stock < 0) {
+                Toast.makeText(this, "El stock no puede ser negativo", Toast.LENGTH_SHORT).show()
+                etStock.requestFocus()
+                return
+            }
+
             val descripcion = etDescripcion.text.toString().trim()
             val disponibilidad = cbDisponibilidad.isChecked
 
             // Fecha actual para actualización
-            val fechaActualizacion = Date()
+            val fechaActualizacion = LocalDateTime.now()
 
             // Registrar información para diagnóstico
-            Log.d("AgregarAutoActivity", "Guardando auto: $marca_id - $modelo ($año)")
+            Log.d("AgregarAutoActivity", "Guardando auto: BYD - $modelo ($anio)")
 
             // Crear o actualizar el auto
             val auto = if (autoId == null) {
                 // Nuevo auto
                 Auto(
-                    marca_id = marca_id,
+                    n_serie = numeroSerie,
+                    sku = sku,
+                    marca_id = MARCA_BYD_ID,
                     modelo = modelo,
-                    año = año,
+                    anio = anio,
                     color = color,
                     precio = precio,
                     stock = stock,
                     descripcion = descripcion,
                     disponibilidad = disponibilidad,
-                    fecha_registro = Date(),
+                    fecha_registro = LocalDateTime.now(),
                     fecha_actualizacion = fechaActualizacion
                 )
             } else {
                 // Auto existente
                 viewModel.getAutoActual().copy(
-                    marca_id = marca_id,
+                    n_serie = numeroSerie,
+                    sku = sku,
+                    marca_id = MARCA_BYD_ID,
                     modelo = modelo,
-                    año = año,
+                    anio = anio,
                     color = color,
                     precio = precio,
                     stock = stock,
