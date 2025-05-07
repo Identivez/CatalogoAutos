@@ -1,3 +1,5 @@
+package com.example.catalogoautos.repository
+
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
@@ -28,14 +30,15 @@ class UsuarioRepository(private val context: Context) {
     // Obtener el usuario actual
     fun getUsuarioActual(): Usuario? {
         try {
-            val usuarioId = sharedPreferences.getString("usuario_id", null)?.toInt()
-            val nombre = sharedPreferences.getString("usuario_nombre", null)
-            val apellido = sharedPreferences.getString("usuario_apellido", null)
-            val email = sharedPreferences.getString("usuario_email", null)
-            val rol = sharedPreferences.getString("usuario_rol", null)
-            val fechaRegistro = sharedPreferences.getString("usuario_fecha_registro", null)
+            val usuarioIdStr = sharedPreferences.getString("usuario_id", null)
+            val usuarioId = usuarioIdStr?.toIntOrNull() ?: 0
+            val nombre = sharedPreferences.getString("usuario_nombre", null) ?: ""
+            val apellido = sharedPreferences.getString("usuario_apellido", null) ?: ""
+            val email = sharedPreferences.getString("usuario_email", null) ?: ""
+            val rol = sharedPreferences.getString("usuario_rol", null) ?: ""
+            val fechaRegistro = sharedPreferences.getString("usuario_fecha_registro", null) ?: ""
 
-            if (usuarioId != null && nombre != null && apellido != null && email != null && rol != null && fechaRegistro != null) {
+            if (usuarioId > 0 && nombre.isNotEmpty() && apellido.isNotEmpty() && email.isNotEmpty() && rol.isNotEmpty()) {
                 return Usuario(
                     usuarioId = usuarioId,
                     nombre = nombre,

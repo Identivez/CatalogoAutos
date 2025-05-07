@@ -44,11 +44,16 @@ data class Usuario(
     }
 
     // Función para convertir fechaRegistro a LocalDateTime, si es necesario
-    fun getFechaRegistroAsLocalDateTime(): LocalDateTime {
+    fun getFechaRegistroAsLocalDateTime(): LocalDateTime? {
         return if (fechaRegistro.isNotEmpty()) {
-            LocalDateTime.parse(fechaRegistro, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            try {
+                LocalDateTime.parse(fechaRegistro, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            } catch (e: Exception) {
+                // Si hay error en el formato, retornar null
+                null
+            }
         } else {
-            LocalDateTime.now()  // Si la fecha está vacía, retorna la fecha y hora actual
+            null
         }
     }
 }

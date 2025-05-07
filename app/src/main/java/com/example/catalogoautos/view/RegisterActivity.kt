@@ -1,6 +1,7 @@
 package com.example.catalogoautos.view
 
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.viewModels
@@ -26,6 +27,28 @@ class RegisterActivity : AppCompatActivity() {
             val email = binding.etEmail.text.toString()
             val password = binding.etPassword.text.toString()
 
+            // Validaciones básicas
+            if (nombre.isEmpty()) {
+                binding.etNombre.error = "El nombre es obligatorio"
+                return@setOnClickListener
+            }
+            if (apellido.isEmpty()) {
+                binding.etApellido.error = "El apellido es obligatorio"
+                return@setOnClickListener
+            }
+            if (email.isEmpty()) {
+                binding.etEmail.error = "El email es obligatorio"
+                return@setOnClickListener
+            }
+            if (!email.endsWith("@admin.com") && !email.endsWith("@tec.com")) {
+                binding.etEmail.error = "El email debe terminar con @admin.com o @tec.com"
+                return@setOnClickListener
+            }
+            if (password.length < 8) {
+                binding.etPassword.error = "La contraseña debe tener al menos 8 caracteres"
+                return@setOnClickListener
+            }
+
             // Asignamos los valores al ViewModel
             vm.nombre.value = nombre
             vm.apellido.value = apellido
@@ -34,6 +57,14 @@ class RegisterActivity : AppCompatActivity() {
 
             // Llamamos a la función para registrar al usuario
             vm.register()
+        }
+
+        // Observamos el estado de carga
+        vm.isLoading.observe(this) { isLoading ->
+            // Mostrar/ocultar indicador de carga
+            binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+            // Habilitar/deshabilitar botón de registro
+            binding.btnRegister.isEnabled = !isLoading
         }
 
         // Observamos el resultado del registro
