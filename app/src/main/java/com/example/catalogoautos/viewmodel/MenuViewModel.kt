@@ -1,23 +1,26 @@
 package com.example.catalogoautos.viewmodel
 
+import UsuarioRepository
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.catalogoautos.repository.AutoRepository
-import com.example.catalogoautos.repository.UsuarioRepository
+
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class MenuViewModel(
     application: Application,
-    private val usuarioRepository: UsuarioRepository
+    private val usuarioRepository: UsuarioRepository,
+    private val autoRepository: AutoRepository
 ) : AndroidViewModel(application) {
 
-    // Exponemos directamente el StateFlow para que la actividad pueda observarlo
-    val usuarioActual: StateFlow<String?> = usuarioRepository.usuarioActual
+    // StateFlow para el usuario actual
+    private val _usuarioActual = MutableStateFlow<String?>(null)
+    val usuarioActual: StateFlow<String?> = _usuarioActual
 
     // StateFlow para el total de autos en inventario
     private val _totalAutos = MutableStateFlow(0)
@@ -26,12 +29,11 @@ class MenuViewModel(
     // Variable para almacenar el último auto seleccionado
     private var lastSelectedAutoId: Int? = null
 
-    // Instancia del repositorio de autos
-    private val autoRepository = AutoRepository.getInstance(application.applicationContext)
-
     init {
         // Inicializar el contador de autos
         cargarTotalAutos()
+        // Inicializar el usuario actual
+        cargarUsuarioActual()
     }
 
     private fun cargarTotalAutos() {
@@ -47,13 +49,17 @@ class MenuViewModel(
         }
     }
 
-    fun logout() {
-        usuarioRepository.logout()
+    // Método para cargar el usuario actual desde el repositorio
+    private fun cargarUsuarioActual() {
+        viewModelScope.launch {
+            val usuario = usuarioRepository.getUsuarioActual()
+            _usuarioActual.value = usuario?.nombre
+        }
     }
 
-    // Mantenemos este método para compatibilidad con el código existente
-    fun getUsuarioActual(): String? {
-        return usuarioRepository.usuarioActual.value
+    fun logout() {
+        usuarioRepository.logout()
+        _usuarioActual.value = null // Limpiar el estado del usuario actual
     }
 
     // Métodos para manejar el último auto seleccionado (para la función de detalles)
@@ -65,14 +71,15 @@ class MenuViewModel(
         return lastSelectedAutoId
     }
 
-    class Factory(private val application: Application) : ViewModelProvider.Factory {
+    class Factory(
+        private val application: Application,
+        private val usuarioRepository: UsuarioRepository,
+        private val autoRepository: AutoRepository
+    ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(MenuViewModel::class.java)) {
-                return MenuViewModel(
-                    application,
-                    UsuarioRepository.getInstance() // Sin parámetro de contexto
-                ) as T
+                return MenuViewModel(application, usuarioRepository, autoRepository) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }

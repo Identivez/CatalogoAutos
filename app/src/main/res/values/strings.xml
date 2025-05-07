@@ -39,4 +39,6 @@
     <string name="icon_user">Icono de usuario</string>
     <string name="icon_password">Icono de contraseña</string>
     <string name="toggle_password_visibility">Mostrar u ocultar contraseña</string>
+    <string name="logging_in">Iniciando sesión...</string>
+    <string name="login">Iniciar sesión</string>
 </resources>

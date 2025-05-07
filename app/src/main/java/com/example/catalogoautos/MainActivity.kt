@@ -16,7 +16,8 @@ import com.example.catalogoautos.ui.theme.CatalogoAutosTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        window.setDecorFitsSystemWindows(false) // Habilitar Edge-to-Edge
+// Habilitar Edge-to-Edge
         setContent {
             CatalogoAutosTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -30,7 +31,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Composable
+    @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     Text(
         text = "Hello $name!",

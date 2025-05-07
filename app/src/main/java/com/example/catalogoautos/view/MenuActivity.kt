@@ -1,21 +1,21 @@
 package com.example.catalogoautos.view
 
+import UsuarioRepository
 import android.content.Intent
 import android.os.Bundle
-import android.view.MenuItem
 import android.widget.ImageButton
-import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.example.catalogoautos.R
+import com.example.catalogoautos.repository.AutoRepository
 import com.example.catalogoautos.viewmodel.MenuViewModel
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.launch
 
-class MenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationItemSelectedListener {
+class MenuActivity : AppCompatActivity() {
 
     private lateinit var tvBienvenida: TextView
     private lateinit var tvTotalAutos: TextView
@@ -33,8 +33,8 @@ class MenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationItemS
         supportActionBar?.hide()
         setContentView(R.layout.activity_menu)
 
-        // Inicializar ViewModel con la Factory actualizada que incluye la aplicación
-        viewModel = ViewModelProvider(this, MenuViewModel.Factory(application))
+        // Inicializar ViewModel con la Factory actualizada que incluye las dependencias
+        viewModel = ViewModelProvider(this, MenuViewModel.Factory(application, UsuarioRepository(this), AutoRepository(applicationContext)))
             .get(MenuViewModel::class.java)
 
         // Configurar referencias a vistas
@@ -48,7 +48,37 @@ class MenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationItemS
         cardDetalle = findViewById(R.id.cardDetalle)
 
         // Configurar la barra de navegación
-        bottomNavigation.setOnNavigationItemSelectedListener(this)
+        bottomNavigation.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.menuHome -> {
+                    // Ya estamos en la pantalla principal
+                    true
+                }
+                R.id.menuInventario -> {
+                    // Acción para Inventario
+                    startActivity(Intent(this, InventarioActivity::class.java))
+                    true
+                }
+                R.id.menuAgregar -> {
+                    // Acción para Agregar
+                    startActivity(Intent(this, AgregarAutoActivity::class.java))
+                    true
+                }
+                R.id.menuCatalogo -> {
+                    // Acción para Catálogo
+                    startActivity(Intent(this, CatalogoAutosActivity::class.java))
+                    true
+                }
+                R.id.menuDetalle -> {
+                    // Acción para Detalle
+                    startActivity(Intent(this, DetalleAutoActivity::class.java))
+                    true
+                }
+                else -> false
+            }
+        }
+
+        // Establecer el item seleccionado por defecto
         bottomNavigation.selectedItemId = R.id.menuHome
 
         // Observar el usuario actual para mostrar mensaje de bienvenida
@@ -85,39 +115,12 @@ class MenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationItemS
         }
 
         cardDetalle.setOnClickListener {
-            // Si tienes alguna lógica para mostrar detalles de un auto específico, añádela aquí
-            // De lo contrario, simplemente abre la actividad de detalles
             startActivity(Intent(this, DetalleAutoActivity::class.java))
         }
 
+        // Listener para el botón de logout
         btnLogout.setOnClickListener {
             viewModel.logout()
         }
-    }
-
-    override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.menuHome -> {
-                // Ya estamos en la pantalla principal
-                return true
-            }
-            R.id.menuInventario -> {
-                startActivity(Intent(this, InventarioActivity::class.java))
-                return true
-            }
-            R.id.menuAgregar -> {
-                startActivity(Intent(this, AgregarAutoActivity::class.java))
-                return true
-            }
-            R.id.menuCatalogo -> {
-                startActivity(Intent(this, CatalogoAutosActivity::class.java))
-                return true
-            }
-            R.id.menuDetalle -> {
-                startActivity(Intent(this, DetalleAutoActivity::class.java))
-                return true
-            }
-        }
-        return false
     }
 }

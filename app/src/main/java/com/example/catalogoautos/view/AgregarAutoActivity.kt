@@ -119,9 +119,6 @@ class AgregarAutoActivity : AppCompatActivity() {
             etStock.setText(autoActual.stock.toString())
             etDescripcion.setText(autoActual.descripcion)
             cbDisponibilidad.isChecked = autoActual.disponibilidad
-
-            // Nota: El manejo de fotos ahora debería manejarse a través de la entidad Foto
-            // Este código debería actualizarse cuando implementes la gestión de fotos
         }
 
         // Configurar listeners de botones
@@ -248,9 +245,6 @@ class AgregarAutoActivity : AppCompatActivity() {
             // Fecha actual para actualización
             val fechaActualizacion = LocalDateTime.now()
 
-            // Registrar información para diagnóstico
-            Log.d("AgregarAutoActivity", "Guardando auto: BYD - $modelo ($anio)")
-
             // Crear o actualizar el auto
             val auto = if (autoId == null) {
                 // Nuevo auto
@@ -287,31 +281,22 @@ class AgregarAutoActivity : AppCompatActivity() {
 
             // Guardar el auto y registrar el resultado
             viewModel.guardarAuto(auto)
-            Log.d("AgregarAutoActivity", "Auto guardado con ID: ${auto.auto_id}")
-
             Toast.makeText(
                 this,
                 if (autoId == null) "Auto agregado correctamente" else "Auto actualizado correctamente",
                 Toast.LENGTH_SHORT
             ).show()
 
-            // Ahora que el auto se ha guardado correctamente, regresamos a la pantalla anterior
-            // Configurar un resultado antes de finalizar para refrescar la lista de autos
-            val resultIntent = Intent()
-            resultIntent.putExtra("AUTO_GUARDADO", true)
-            setResult(Activity.RESULT_OK, resultIntent)
-
+            // Volver a la pantalla anterior
             finish()
         } catch (e: Exception) {
-            // Registrar el error para diagnóstico
-            Log.e("AgregarAutoActivity", "Error al guardar auto: ${e.message}", e)
             Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
     // Manejar clic en el botón de volver
     override fun onSupportNavigateUp(): Boolean {
-        onBackPressed()
+        onBackPressedDispatcher.onBackPressed()
         return true
     }
 }

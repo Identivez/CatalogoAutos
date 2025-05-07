@@ -4,11 +4,13 @@ import android.content.Intent
 import android.os.Bundle
 import android.text.method.HideReturnsTransformationMethod
 import android.text.method.PasswordTransformationMethod
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.example.catalogoautos.R
@@ -23,16 +25,15 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var ibTogglePassword: ImageButton
 
     private lateinit var viewModel: LoginViewModel
+    private val TAG = "LoginActivity"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         supportActionBar?.hide()
         setContentView(R.layout.activity_login)
 
-
         // Inicializar ViewModel
-        viewModel = ViewModelProvider(this, LoginViewModel.Factory())
-            .get(LoginViewModel::class.java)
+        viewModel = ViewModelProvider(this).get(LoginViewModel::class.java)
 
         // Configurar referencias a vistas
         etUsername = findViewById(R.id.etUsername)
@@ -50,6 +51,52 @@ class LoginActivity : AppCompatActivity() {
         btnLogin.setOnClickListener {
             attemptLogin()
         }
+
+        // Configurar el botón para ir al registro
+        val btnGoToRegister: Button = findViewById(R.id.btnGoToRegister)
+        btnGoToRegister.setOnClickListener {
+            val intent = Intent(this, RegisterActivity::class.java)
+            startActivity(intent)
+        }
+
+        // Observar el resultado del login
+        viewModel.loginResult.observe(this) { result ->
+            result.fold(
+                onSuccess = {
+                    Log.d(TAG, "Login exitoso")
+                    hideError()
+                    // Login exitoso, navegar al menú principal
+                    startActivity(Intent(this, MenuActivity::class.java))
+                    finish() // Cerrar esta actividad para que no puedan volver atrás
+                },
+                onFailure = { error ->
+                    Log.e(TAG, "Error de login: ${error.message}")
+                    showError("Error: ${error.message}")
+
+                    // Mostrar un Toast con información del error
+                    Toast.makeText(
+                        this,
+                        "Error de conexión. Verifica tus credenciales o la conexión al servidor.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            )
+        }
+
+        // Observar el estado de carga
+        viewModel.isLoading.observe(this) { isLoading ->
+            if (isLoading) {
+                btnLogin.isEnabled = false
+                btnLogin.text = getString(R.string.logging_in)
+                Toast.makeText(this, "Validando credenciales...", Toast.LENGTH_SHORT).show()
+            } else {
+                btnLogin.isEnabled = true
+                btnLogin.text = getString(R.string.login)
+            }
+        }
+
+        // Mostrar información del servidor (opcional, puedes eliminar en producción)
+        Log.d(TAG, "URL del servidor: http://192.168.1.18:8080/ae_byd/api/usuario/login")
     }
 
     private fun togglePasswordVisibility() {
@@ -75,17 +122,23 @@ class LoginActivity : AppCompatActivity() {
             return
         }
 
-        if (viewModel.login(username, password)) {
-            // Login exitoso, navegar al menú principal
-            startActivity(Intent(this, MenuActivity::class.java))
-            finish() // Cerrar esta actividad para que no puedan volver atrás
-        } else {
-            showError(getString(R.string.login_error))
-        }
+        // Ocultar mensajes de error anteriores
+        hideError()
+
+        // Establecemos los valores del ViewModel
+        viewModel.email.value = username
+        viewModel.password.value = password
+
+        // Llamamos al login
+        viewModel.login()
     }
 
     private fun showError(message: String) {
         tvError.text = message
         tvError.visibility = View.VISIBLE
+    }
+
+    private fun hideError() {
+        tvError.visibility = View.GONE
     }
 }
