@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
+        <!-- IP para desarrollo en casa -->
         <domain includeSubdomains="true">192.168.1.18</domain>
+        <!-- IP para desarrollo en la biblioteca -->
+        <domain includeSubdomains="true">10.150.5.10</domain>
+        <!-- Dominio ngrok -->
+        <domain includeSubdomains="true">ngrok-free.app</domain>
+        <!-- IP para desarrollo en CC-->
+        <domain includeSubdomains="true">10.250.3.8</domain>
+        <!-- IP para desarrollo en el T-->
+        <domain includeSubdomains="true">10.228.7.169</domain>
     </domain-config>
 </network-security-config>

@@ -32,8 +32,9 @@ class LoginActivity : AppCompatActivity() {
         supportActionBar?.hide()
         setContentView(R.layout.activity_login)
 
-        // Inicializar ViewModel
-        viewModel = ViewModelProvider(this).get(LoginViewModel::class.java)
+        // Inicializar ViewModel con Factory
+        viewModel = ViewModelProvider(this, LoginViewModel.Factory(application))
+            .get(LoginViewModel::class.java)
 
         // Configurar referencias a vistas
         etUsername = findViewById(R.id.etUsername)
@@ -65,9 +66,22 @@ class LoginActivity : AppCompatActivity() {
                 onSuccess = {
                     Log.d(TAG, "Login exitoso")
                     hideError()
-                    // Login exitoso, navegar al menú principal
-                    startActivity(Intent(this, MenuActivity::class.java))
-                    finish() // Cerrar esta actividad para que no puedan volver atrás
+
+                    // Crear un Intent explícito para la actividad del menú
+                    val intent = Intent(this@LoginActivity, MenuActivity::class.java)
+
+                    // Agregar flags para limpiar la pila de actividades
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+
+                    Log.d(TAG, "Iniciando MenuActivity desde LoginActivity")
+
+                    // Iniciar la actividad
+                    startActivity(intent)
+
+                    Log.d(TAG, "Después de startActivity para MenuActivity")
+
+                    // Cerrar esta actividad
+                    finish()
                 },
                 onFailure = { error ->
                     Log.e(TAG, "Error de login: ${error.message}")
@@ -96,7 +110,27 @@ class LoginActivity : AppCompatActivity() {
         }
 
         // Mostrar información del servidor (opcional, puedes eliminar en producción)
-        Log.d(TAG, "URL del servidor: http://192.168.1.18:8080/ae_byd/api/usuario/login")
+        Log.d(TAG, "URL del servidor: http://10.228.7.169:8080/ae_byd/api/usuario/login")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.d(TAG, "LoginActivity onResume")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Log.d(TAG, "LoginActivity onPause")
+    }
+
+    override fun onStop() {
+        super.onStop()
+        Log.d(TAG, "LoginActivity onStop")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d(TAG, "LoginActivity onDestroy")
     }
 
     private fun togglePasswordVisibility() {

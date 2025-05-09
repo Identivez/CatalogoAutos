@@ -7,8 +7,7 @@
     <!-- Para Android 13+ -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.INTERNET" />
-
-
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:networkSecurityConfig="@xml/network_security_config"
@@ -27,37 +26,52 @@
         <activity
             android:name=".view.LoginActivity"
             android:exported="true"
+            android:noHistory="true"
             android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
         </activity>
+
+        <!-- Actividad de Registro -->
         <activity
             android:name=".view.RegisterActivity"
-            android:exported="false" />
-        <!-- Otras actividades de la aplicación -->
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+            android:parentActivityName=".view.LoginActivity" />
+
+        <!-- Menú Principal -->
         <activity
             android:name=".view.MenuActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.DarkActionBar" />
 
+        <!-- Actividades de funcionalidades -->
         <activity
             android:name=".view.AgregarAutoActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+            android:parentActivityName=".view.MenuActivity" />
 
         <activity
             android:name=".view.InventarioActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+            android:parentActivityName=".view.MenuActivity" />
 
         <activity
             android:name=".view.DetalleAutoActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+            android:parentActivityName=".view.InventarioActivity" />
 
-        <!-- Nueva actividad para el catálogo de autos -->
+        <!-- Actividad para el catálogo de autos -->
         <activity
             android:name=".view.CatalogoAutosActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+            android:parentActivityName=".view.MenuActivity" />
 
         <!-- Actividad principal original (puedes eliminarla si no la usarás) -->
         <activity

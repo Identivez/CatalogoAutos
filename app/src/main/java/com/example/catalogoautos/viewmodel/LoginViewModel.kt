@@ -1,9 +1,13 @@
 package com.example.catalogoautos.viewmodel
 
+import android.app.Application
 import android.util.Log
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import com.example.catalogoautos.repository.UsuarioRepository
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -13,16 +17,18 @@ import org.json.JSONObject
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-class LoginViewModel : ViewModel() {
+class LoginViewModel(application: Application) : AndroidViewModel(application) {
     val email = MutableLiveData<String>()
     val password = MutableLiveData<String>()
 
-    // Corregido: asteriscos (*) por guiones bajos (_)
-    private val _loginResult = MutableLiveData<Result<JSONObject>>()
-    val loginResult: LiveData<Result<JSONObject>> = _loginResult
+    private val _loginResult = MutableLiveData<Result<Unit>>()
+    val loginResult: LiveData<Result<Unit>> = _loginResult
 
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
+
+    // Instancia del repositorio para guardar datos del usuario
+    private val usuarioRepository = UsuarioRepository(application.applicationContext)
 
     val TAG = "LoginViewModel"
 
@@ -37,7 +43,7 @@ class LoginViewModel : ViewModel() {
         .readTimeout(15, TimeUnit.SECONDS)
         .build()
 
-    fun testAllUrls() {
+   fun testAllUrls() {
         val executorService = Executors.newSingleThreadExecutor()
         executorService.execute {
             Log.d(TAG, "INICIANDO PRUEBA DE TODAS LAS URLS")
@@ -114,8 +120,8 @@ class LoginViewModel : ViewModel() {
         val executorService = Executors.newSingleThreadExecutor()
         executorService.execute {
             try {
-                // Usar la URL que sabemos que funciona
-                val url = "http://192.168.1.18:8080/ae_byd/api/usuario/login"
+                
+                val url = "http://10.228.7.169:8080/ae_byd/api/usuario/login"
 
                 // Crear el JSON con los datos de login
                 val json = JSONObject().apply {
@@ -145,7 +151,26 @@ class LoginViewModel : ViewModel() {
                 if (response.isSuccessful && responseBody != null) {
                     try {
                         val jsonResponse = JSONObject(responseBody)
-                        _loginResult.postValue(Result.success(jsonResponse))
+
+                        // Extraer datos del usuario - IMPORTANTE: Usar el nombre de campo correcto "usuarioId"
+                        val usuarioId = jsonResponse.optInt("usuarioId", 0)
+                        val nombre = jsonResponse.optString("nombre", "")
+                        val apellido = jsonResponse.optString("apellido", "")
+                        val email = jsonResponse.optString("email", "")
+                        val rol = jsonResponse.optString("rol", "")
+                        val fechaRegistro = jsonResponse.optString("fechaRegistro", "")
+
+                        Log.d(TAG, "Datos extraídos del JSON: ID=$usuarioId, Nombre=$nombre, Apellido=$apellido")
+
+                        // Guardar los datos del usuario en el repositorio
+                        usuarioRepository.setUsuarioActual(
+                            usuarioId, nombre, apellido, email, rol, fechaRegistro
+                        )
+
+                        // Notificar éxito
+                        _loginResult.postValue(Result.success(Unit))
+
+                        Log.d(TAG, "Usuario guardado en sesión: $nombre $apellido")
                     } catch (e: Exception) {
                         Log.e(TAG, "Error al procesar respuesta JSON: ${e.message}")
                         _loginResult.postValue(Result.failure(Exception("Error al procesar respuesta: ${e.message}")))
@@ -181,4 +206,16 @@ class LoginViewModel : ViewModel() {
                 }
             }
         }
-    }}
+    }
+
+    // Factory para crear instancias del ViewModel con el contexto de la aplicación
+    class Factory(private val application: Application) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(LoginViewModel::class.java)) {
+                return LoginViewModel(application) as T
+            }
+            throw IllegalArgumentException("Unknown ViewModel class")
+        }
+    }
+}

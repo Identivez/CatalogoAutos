@@ -61,7 +61,7 @@ class RegisterViewModel : ViewModel() {
         val mediaType = "application/json".toMediaType()
         val body = RequestBody.create(mediaType, json.toString())
         val request = Request.Builder()
-            .url("http://192.168.1.18:8080/ae_byd/api/usuario")  // URL actualizada con la IP correcta
+            .url("http://10.250.3.8:8080/ae_byd/api/usuario")  // URL actualizada con la IP correcta
             .post(body)
             .build()
 
