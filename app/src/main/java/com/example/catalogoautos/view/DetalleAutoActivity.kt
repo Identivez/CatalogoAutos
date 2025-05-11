@@ -2,27 +2,21 @@ package com.example.catalogoautos.view
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
 import com.example.catalogoautos.R
+import com.example.catalogoautos.repository.AutoRepository
 import com.example.catalogoautos.viewmodel.DetalleAutoViewModel
-import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
-import java.text.NumberFormat
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 class DetalleAutoActivity : AppCompatActivity() {
 
-    // Elementos de la interfaz de usuario
+    // Referencias a las vistas
     private lateinit var ivFotoAuto: ImageView
     private lateinit var tvNumeroSerie: TextView
     private lateinit var tvSku: TextView
@@ -37,30 +31,33 @@ class DetalleAutoActivity : AppCompatActivity() {
     private lateinit var tvFechaRegistro: TextView
     private lateinit var tvFechaActualizacion: TextView
     private lateinit var btnEditar: Button
-    private lateinit var btnEstadoDisponibilidad: Button // Cambiamos el nombre para que coincida con el ID en el layout
+    private lateinit var btnCambiarDisponibilidad: Button
     private lateinit var progressBar: View
 
-    // ViewModel y datos
+    // ViewModel
     private lateinit var viewModel: DetalleAutoViewModel
+
+    // Variables auxiliares
     private var autoId: Int = -1
     private var fromCatalogo: Boolean = false
-
-    // Constante para la marca BYD
     private val MARCA_BYD = "BYD"
+    private val REQUEST_EDIT_AUTO = 100
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        supportActionBar?.hide()
         setContentView(R.layout.activity_detalle_auto)
 
-        // Habilitar botón de volver en la barra de acción
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-
         // Inicializar ViewModel
-        viewModel = ViewModelProvider(this, DetalleAutoViewModel.Factory(this))
-            .get(DetalleAutoViewModel::class.java)
+        viewModel = ViewModelProvider(
+            this,
+            DetalleAutoViewModel.Factory(AutoRepository.getInstance(applicationContext))
+        ).get(DetalleAutoViewModel::class.java)
 
-        // Obtener ID del auto a mostrar y verificar si viene del catálogo
+        // Configurar barra de acción
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = "Detalles del Auto"
+
+        // Obtener ID del auto a mostrar
         autoId = intent.getIntExtra("auto_id", -1)
         if (autoId == -1) {
             autoId = intent.getIntExtra("AUTO_ID", -1)
@@ -73,35 +70,24 @@ class DetalleAutoActivity : AppCompatActivity() {
             return
         }
 
-        // Configurar referencias a vistas
+        // Inicializar vistas
         setupViews()
+
+        // Configurar observadores
+        setupObservers()
 
         // Cargar datos del auto
         viewModel.cargarAuto(autoId)
-
-        // Observar cambios en los datos
-        setupObservers()
 
         // Configurar modo de visualización si viene del catálogo
         if (fromCatalogo) {
             configurarModoVisualizacion()
         } else {
-            // Configurar listener del botón de editar
-            btnEditar.setOnClickListener {
-                val intent = Intent(this, AgregarAutoActivity::class.java)
-                intent.putExtra("AUTO_ID", autoId)
-                startActivity(intent)
-            }
-
-            // Configurar botón para cambiar disponibilidad
-            btnEstadoDisponibilidad.setOnClickListener {
-                val disponibilidadActual = viewModel.auto.value?.disponibilidad ?: false
-                viewModel.actualizarDisponibilidad(autoId, !disponibilidadActual)
-            }
+            // Configurar botones de acción
+            setupActionButtons()
         }
     }
 
-    // En DetalleAutoActivity.kt, actualiza tu método setupViews() así:
     private fun setupViews() {
         ivFotoAuto = findViewById(R.id.ivFotoAuto)
         tvNumeroSerie = findViewById(R.id.tvNumeroSerie)
@@ -117,20 +103,20 @@ class DetalleAutoActivity : AppCompatActivity() {
         tvFechaRegistro = findViewById(R.id.tvFechaRegistro)
         tvFechaActualizacion = findViewById(R.id.tvFechaActualizacion)
         btnEditar = findViewById(R.id.btnEditar)
-        // Intentamos con el ID "btnCambiarDisponibilidad" que podría estar en el layout
-        btnEstadoDisponibilidad = findViewById(R.id.btnCambiarDisponibilidad)
+        btnCambiarDisponibilidad = findViewById(R.id.btnCambiarDisponibilidad)
         progressBar = findViewById(R.id.progressBar)
 
         // Establecer BYD como marca por defecto
         tvMarca.text = MARCA_BYD
     }
+
     private fun setupObservers() {
-        // Observar cambios en el auto
+        // Observar el auto seleccionado
         viewModel.auto.observe(this) { auto ->
-            if (auto != null) {
-                mostrarDatosAuto(auto)
-            } else {
-                Toast.makeText(this, "Error: No se pudo cargar la información del auto", Toast.LENGTH_SHORT).show()
+            auto?.let {
+                mostrarDatosAuto(it)
+            } ?: run {
+                Toast.makeText(this, "No se pudo cargar la información del auto", Toast.LENGTH_SHORT).show()
                 finish()
             }
         }
@@ -150,64 +136,76 @@ class DetalleAutoActivity : AppCompatActivity() {
         }
 
         // Observar estado de carga
-        lifecycleScope.launch {
-            viewModel.isLoading.collectLatest { isLoading ->
-                progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
-            }
+        viewModel.isLoading.observe(this) { isLoading ->
+            progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
         }
 
         // Observar errores
-        lifecycleScope.launch {
-            viewModel.error.collectLatest { error ->
-                error?.let {
-                    Snackbar.make(findViewById(android.R.id.content), it, Snackbar.LENGTH_LONG).show()
-                }
+        viewModel.error.observe(this) { error ->
+            error?.let {
+                Toast.makeText(this, it, Toast.LENGTH_LONG).show()
             }
+        }
+    }
+
+    private fun setupActionButtons() {
+        // Configurar botón de editar
+        btnEditar.setOnClickListener {
+            val intent = Intent(this, AgregarAutoActivity::class.java)
+            intent.putExtra("AUTO_ID", autoId)
+            startActivityForResult(intent, REQUEST_EDIT_AUTO)
+        }
+
+        // Configurar botón para cambiar disponibilidad
+        btnCambiarDisponibilidad.setOnClickListener {
+            val disponibilidadActual = viewModel.auto.value?.disponibilidad ?: false
+            val nuevoEstado = !disponibilidadActual
+
+            // Confirmar el cambio
+            AlertDialog.Builder(this)
+                .setTitle("Cambiar disponibilidad")
+                .setMessage("¿Seguro que deseas marcar este auto como ${if (nuevoEstado) "disponible" else "no disponible"}?")
+                .setPositiveButton("Sí") { _, _ ->
+                    viewModel.actualizarDisponibilidad(autoId, nuevoEstado)
+                }
+                .setNegativeButton("No", null)
+                .show()
         }
     }
 
     private fun configurarModoVisualizacion() {
-        // Ocultar botones de edición cuando se viene del catálogo
+        // Ocultar botones de acción cuando se viene del catálogo
         btnEditar.visibility = View.GONE
-        btnEstadoDisponibilidad.visibility = View.GONE
-
-        // Cambiar el título para indicar modo visualización
-        supportActionBar?.title = "Detalles del Auto"
+        btnCambiarDisponibilidad.visibility = View.GONE
     }
 
     private fun mostrarDatosAuto(auto: com.example.catalogoautos.model.Auto) {
-        // Para la imagen, en una implementación completa buscarías la foto principal
-        // usando la relación con la entidad Foto
-        // Por ahora mostramos una imagen predeterminada
+        // Mostrar imagen del auto (por ahora usamos placeholder)
         ivFotoAuto.setImageResource(R.drawable.ic_launcher_foreground)
 
-        // Mostrar datos del auto incluyendo los nuevos campos
+        // Mostrar datos del auto
         tvNumeroSerie.text = auto.n_serie
         tvSku.text = auto.sku
         tvModelo.text = auto.modelo
         tvAnio.text = auto.anio.toString()
         tvColor.text = auto.color
-
-        // La disponibilidad y el precio se manejan a través de observadores específicos
-
-        // Mostrar información de stock
-        tvStock.text = "Stock: ${formatoNumeroConSeparadores(auto.stock)} unidades"
+        tvStock.text = "${auto.stock} unidades"
         tvDescripcion.text = auto.descripcion
 
-        // Actualizar texto del botón de disponibilidad
-        btnEstadoDisponibilidad.text = if (auto.disponibilidad)
+        // Mostrar disponibilidad con estilo visual
+        if (auto.disponibilidad) {
+            tvDisponibilidad.text = "Disponible"
+            tvDisponibilidad.setTextColor(getColor(R.color.green))
+        } else {
+            tvDisponibilidad.text = "No disponible"
+            tvDisponibilidad.setTextColor(getColor(R.color.red))
+        }
+
+        // Actualizar el texto del botón de disponibilidad
+        btnCambiarDisponibilidad.text = if (auto.disponibilidad)
             "Marcar como No Disponible"
         else
             "Marcar como Disponible"
-
-        // Aplicar estilo visual a la disponibilidad
-        if (auto.disponibilidad) {
-            tvDisponibilidad.text = "Disponible"
-            tvDisponibilidad.setTextColor(getResources().getColor(R.color.green, theme))
-        } else {
-            tvDisponibilidad.text = "No disponible"
-            tvDisponibilidad.setTextColor(getResources().getColor(R.color.red, theme))
-        }
 
         // Destacar campos nuevos si corresponde
         if (viewModel.debeMostrarIndicadorNuevoCampo("n_serie")) {
@@ -219,33 +217,23 @@ class DetalleAutoActivity : AppCompatActivity() {
         }
     }
 
-    // Función para formatear números con separadores de miles
-    private fun formatoNumeroConSeparadores(numero: Int): String {
-        return NumberFormat.getNumberInstance(Locale.getDefault()).format(numero)
-    }
-
-    // Función para destacar visualmente los campos nuevos
     private fun highlightNewField(textView: TextView) {
-        // Usamos un icono genérico para el indicador "new"
-        textView.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_launcher_foreground, 0)
+        textView.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.badge_background, 0)
         textView.compoundDrawablePadding = 8
     }
 
-    // Manejar clic en el botón de volver
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == android.R.id.home) {
-            onBackPressed()
-            return true
-        }
-        return super.onOptionsItemSelected(item)
-    }
-
-    // Actualizar datos cuando se regresa de editar
-    override fun onResume() {
-        super.onResume()
-        if (!fromCatalogo && autoId != -1) {
-            // Solo recargamos los datos si no estamos en modo visualización del catálogo
+    // Manejar resultado de la edición del auto
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_EDIT_AUTO && resultCode == RESULT_OK) {
+            // Si el auto fue editado exitosamente, recargarlo
             viewModel.cargarAuto(autoId)
         }
+    }
+
+    // Reemplazar onBackPressed() por onBackPressedDispatcher.onBackPressed()
+    override fun onSupportNavigateUp(): Boolean {
+        onBackPressedDispatcher.onBackPressed()
+        return true
     }
 }

@@ -121,7 +121,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
         executorService.execute {
             try {
                 
-                val url = "http://10.228.7.169:8080/ae_byd/api/usuario/login"
+                val url = "http://192.168.1.14:8080/ae_byd/api/usuario/login"
 
                 // Crear el JSON con los datos de login
                 val json = JSONObject().apply {

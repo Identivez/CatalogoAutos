@@ -1,12 +1,13 @@
 package com.example.catalogoautos.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import okhttp3.*
-import okhttp3.MediaType.Companion.toMediaType
+import androidx.lifecycle.viewModelScope
+import com.example.catalogoautos.network.ApiClient
+import kotlinx.coroutines.launch
 import org.json.JSONObject
-import java.io.IOException
 
 class RegisterViewModel : ViewModel() {
 
@@ -21,12 +22,10 @@ class RegisterViewModel : ViewModel() {
     private val _result = MutableLiveData<Result<Unit>>()
     val result: LiveData<Result<Unit>> = _result
 
-    // Crear un cliente de OkHttp para hacer las solicitudes de red
-    private val client = OkHttpClient()
+    val TAG = "RegisterViewModel"
 
-    // Función para registrar el usuario sin la capa de red adicional
     fun register() {
-        // Validar que los campos no estén vacíos
+        // Validar campos
         if (nombre.value.isNullOrEmpty() ||
             apellido.value.isNullOrEmpty() ||
             email.value.isNullOrEmpty() ||
@@ -35,13 +34,13 @@ class RegisterViewModel : ViewModel() {
             return
         }
 
-        // Validar el formato del correo
+        // Validar email
         if (!email.value!!.endsWith("@admin.com") && !email.value!!.endsWith("@tec.com")) {
             _result.value = Result.failure(Exception("El correo debe terminar con @admin.com o @tec.com"))
             return
         }
 
-        // Validar longitud de la contraseña
+        // Validar password
         if (password.value!!.length < 8) {
             _result.value = Result.failure(Exception("La contraseña debe tener al menos 8 caracteres"))
             return
@@ -49,42 +48,31 @@ class RegisterViewModel : ViewModel() {
 
         _isLoading.value = true
 
-        // Crear el JSON para enviar al backend
-        val json = JSONObject().apply {
-            put("nombre", nombre.value)
-            put("apellido", apellido.value)
-            put("email", email.value)
-            put("password", password.value)
-        }
+        // Crear un mapa con los datos del usuario
+        val usuarioMap = mapOf(
+            "nombre" to nombre.value!!,
+            "apellido" to apellido.value!!,
+            "email" to email.value!!,
+            "password" to password.value!!
+        )
 
-        // Crear la solicitud HTTP POST
-        val mediaType = "application/json".toMediaType()
-        val body = RequestBody.create(mediaType, json.toString())
-        val request = Request.Builder()
-            .url("http://10.250.3.8:8080/ae_byd/api/usuario")  // URL actualizada con la IP correcta
-            .post(body)
-            .build()
-
-        // Realizar la solicitud asíncrona
-        client.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                _isLoading.postValue(false)
-                _result.postValue(Result.failure(e))
-            }
-
-            override fun onResponse(call: Call, response: Response) {
-                _isLoading.postValue(false)
+        // Usar coroutines para la llamada a la API
+        viewModelScope.launch {
+            try {
+                val response = ApiClient.userApi.register(usuarioMap)
 
                 if (response.isSuccessful) {
-                    _result.postValue(Result.success(Unit))  // Registro exitoso
+                    _result.value = Result.success(Unit)
                 } else {
-                    // Intentar obtener el mensaje de error del cuerpo de la respuesta
-                    val errorBody = response.body?.string() ?: "Error desconocido"
-                    _result.postValue(Result.failure(Exception(errorBody)))
+                    val errorBody = response.errorBody()?.string() ?: "Error desconocido"
+                    _result.value = Result.failure(Exception(errorBody))
                 }
-
-                response.close()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error en la llamada API: ${e.message}")
+                _result.value = Result.failure(e)
+            } finally {
+                _isLoading.value = false
             }
-        })
+        }
     }
 }

@@ -11,5 +11,7 @@
         <domain includeSubdomains="true">10.250.3.8</domain>
         <!-- IP para desarrollo en el T-->
         <domain includeSubdomains="true">10.228.7.169</domain>
+        <!-- IP para desarrollo en casa 2-->
+        <domain includeSubdomains="true">192.168.1.14</domain>
     </domain-config>
 </network-security-config>

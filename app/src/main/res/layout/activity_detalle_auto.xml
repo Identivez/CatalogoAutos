@@ -241,7 +241,15 @@
             android:textSize="12sp"
             android:layout_marginBottom="16dp"
             tools:text="Última actualización: 15/01/2023" />
-
+        <!-- Añadir esto justo antes de los botones -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp" />
         <Button
             android:id="@+id/btnEditar"
             android:layout_width="match_parent"
