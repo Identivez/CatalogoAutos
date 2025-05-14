@@ -10,14 +10,17 @@ import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.example.catalogoautos.R
 import com.example.catalogoautos.model.Auto
 import com.example.catalogoautos.viewmodel.AgregarAutoViewModel
+import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import java.time.LocalDateTime
@@ -38,6 +41,7 @@ class AgregarAutoActivity : AppCompatActivity() {
     private lateinit var btnSeleccionarFoto: Button
     private lateinit var ivFotoPreview: ImageView
     private lateinit var btnGuardar: Button
+    private lateinit var progressBar: ProgressBar
 
     private lateinit var viewModel: AgregarAutoViewModel
     private var selectedImageUri: Uri? = null
@@ -45,6 +49,7 @@ class AgregarAutoActivity : AppCompatActivity() {
 
     // Constante para la marca BYD
     private val MARCA_BYD_ID = 1
+    private val TAG = "AgregarAutoActivity"
 
     private val selectImageLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
@@ -57,12 +62,12 @@ class AgregarAutoActivity : AppCompatActivity() {
                     ivFotoPreview.setImageURI(selectedImageUri)
                     ivFotoPreview.visibility = View.VISIBLE
 
-                    Log.d("AgregarAutoActivity", "Imagen copiada exitosamente a: $imagePath")
+                    Log.d(TAG, "Imagen copiada exitosamente a: $imagePath")
                 } else {
                     Toast.makeText(this, "Error al procesar la imagen", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                Log.e("AgregarAutoActivity", "Error al procesar la imagen: ${e.message}", e)
+                Log.e(TAG, "Error al procesar la imagen: ${e.message}", e)
                 Toast.makeText(this, "Error al procesar la imagen", Toast.LENGTH_SHORT).show()
             }
         }
@@ -100,6 +105,7 @@ class AgregarAutoActivity : AppCompatActivity() {
         btnSeleccionarFoto = findViewById(R.id.btnSeleccionarFoto)
         ivFotoPreview = findViewById(R.id.ivFotoPreview)
         btnGuardar = findViewById(R.id.btnGuardar)
+        progressBar = findViewById(R.id.progressBar)
 
         // Establecer BYD como marca predeterminada
         tvMarcaSeleccionada.text = "BYD"
@@ -130,6 +136,24 @@ class AgregarAutoActivity : AppCompatActivity() {
         btnGuardar.setOnClickListener {
             guardarAuto()
         }
+
+        // Observadores
+        setupObservers()
+    }
+
+    private fun setupObservers() {
+        // Observar estado de carga
+        viewModel.isLoading.observe(this) { isLoading ->
+            progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+            btnGuardar.isEnabled = !isLoading
+        }
+
+        // Observar mensajes de error
+        viewModel.errorMessage.observe(this) { errorMessage ->
+            if (!errorMessage.isNullOrEmpty()) {
+                Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     // Método para copiar la imagen seleccionada al almacenamiento interno de la aplicación
@@ -145,7 +169,7 @@ class AgregarAutoActivity : AppCompatActivity() {
 
             return outputFile.absolutePath
         } catch (e: Exception) {
-            Log.e("AgregarAutoActivity", "Error copiando imagen: ${e.message}", e)
+            Log.e(TAG, "Error copiando imagen: ${e.message}", e)
             return null
         }
     }
@@ -279,16 +303,55 @@ class AgregarAutoActivity : AppCompatActivity() {
                 )
             }
 
-            // Guardar el auto y registrar el resultado
-            viewModel.guardarAuto(auto)
-            Toast.makeText(
-                this,
-                if (autoId == null) "Auto agregado correctamente" else "Auto actualizado correctamente",
-                Toast.LENGTH_SHORT
-            ).show()
+            // Mostrar ProgressBar y deshabilitar botón
+            progressBar.visibility = View.VISIBLE
+            btnGuardar.isEnabled = false
 
-            // Volver a la pantalla anterior
-            finish()
+            // Guardar el auto remotamente
+            lifecycleScope.launch {
+                try {
+                    // Intentar guardar en el servidor primero
+                    val resultado = viewModel.guardarAutoRemoto(auto)
+
+                    resultado.fold(
+                        onSuccess = {
+                            Toast.makeText(
+                                this@AgregarAutoActivity,
+                                if (autoId == null) "Auto agregado correctamente al servidor"
+                                else "Auto actualizado correctamente en el servidor",
+                                Toast.LENGTH_SHORT
+                            ).show()
+
+                            // Volver a la pantalla anterior
+                            setResult(RESULT_OK)
+                            finish()
+                        },
+                        onFailure = { error ->
+                            // Se guardó localmente pero hubo error en el servidor
+                            Toast.makeText(
+                                this@AgregarAutoActivity,
+                                "Auto guardado localmente pero hubo un error en el servidor: ${error.message}",
+                                Toast.LENGTH_LONG
+                            ).show()
+
+                            // Volver a la pantalla anterior
+                            setResult(RESULT_OK)
+                            finish()
+                        }
+                    )
+                } catch (e: Exception) {
+                    // Error general
+                    runOnUiThread {
+                        progressBar.visibility = View.GONE
+                        btnGuardar.isEnabled = true
+                        Toast.makeText(
+                            this@AgregarAutoActivity,
+                            "Error: ${e.message}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
         } catch (e: Exception) {
             Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
         }

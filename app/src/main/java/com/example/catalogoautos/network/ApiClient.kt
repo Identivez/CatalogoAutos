@@ -7,8 +7,17 @@ import okhttp3.logging.HttpLoggingInterceptor
 import java.util.concurrent.TimeUnit
 
 object ApiClient {
-    // URL corregida - usando la ruta correcta
-    private const val BASE_URL = "http://192.168.1.14:8080/api/"
+
+    // URL base centralizada - solo hay que cambiarla aquí
+    private const val BASE_URL = "http://10.250.3.8:8080/AE_BYD/api/"
+
+    // Constantes para los endpoints específicos
+    const val AUTO_ENDPOINT = "auto"
+    const val USER_ENDPOINT = "usuario"
+    const val LOGIN_ENDPOINT = "$USER_ENDPOINT/login"
+
+    // Para obtener la URL completa de un endpoint
+    fun getFullUrl(endpoint: String): String = "$BASE_URL$endpoint"
 
     // Crear un interceptor para logging
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
@@ -16,7 +25,7 @@ object ApiClient {
     }
 
     // Crear el cliente OkHttp con el interceptor y timeouts
-    private val client = OkHttpClient.Builder()
+    val httpClient = OkHttpClient.Builder()
         .addInterceptor(loggingInterceptor)
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
@@ -27,7 +36,7 @@ object ApiClient {
     private val retrofit = Retrofit.Builder()
         .baseUrl(BASE_URL)
         .addConverterFactory(GsonConverterFactory.create())
-        .client(client)
+        .client(httpClient)
         .build()
 
     // Crear servicios

@@ -23,94 +23,130 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var btnLogin: Button
     private lateinit var tvError: TextView
     private lateinit var ibTogglePassword: ImageButton
+    private lateinit var btnGoToRegister: Button
 
     private lateinit var viewModel: LoginViewModel
     private val TAG = "LoginActivity"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        supportActionBar?.hide()
-        setContentView(R.layout.activity_login)
+        Log.d(TAG, "LoginActivity onCreate")
 
-        // Inicializar ViewModel con Factory
-        viewModel = ViewModelProvider(this, LoginViewModel.Factory(application))
-            .get(LoginViewModel::class.java)
+        try {
+            supportActionBar?.hide()
+            setContentView(R.layout.activity_login)
 
-        // Configurar referencias a vistas
-        etUsername = findViewById(R.id.etUsername)
-        etPassword = findViewById(R.id.etPassword)
-        btnLogin = findViewById(R.id.btnLogin)
-        tvError = findViewById(R.id.tvError)
-        ibTogglePassword = findViewById(R.id.ibTogglePassword)
+            // Inicializar ViewModel con Factory
+            viewModel = ViewModelProvider(this, LoginViewModel.Factory(application))
+                .get(LoginViewModel::class.java)
 
-        // Configurar el botón de toggle para la contraseña
-        ibTogglePassword.setOnClickListener {
-            togglePasswordVisibility()
-        }
+            // Configurar referencias a vistas
+            etUsername = findViewById(R.id.etUsername)
+            etPassword = findViewById(R.id.etPassword)
+            btnLogin = findViewById(R.id.btnLogin)
+            tvError = findViewById(R.id.tvError)
+            ibTogglePassword = findViewById(R.id.ibTogglePassword)
+            btnGoToRegister = findViewById(R.id.btnGoToRegister)
 
-        // Configurar click listener para el botón de login
-        btnLogin.setOnClickListener {
-            attemptLogin()
-        }
-
-        // Configurar el botón para ir al registro
-        val btnGoToRegister: Button = findViewById(R.id.btnGoToRegister)
-        btnGoToRegister.setOnClickListener {
-            val intent = Intent(this, RegisterActivity::class.java)
-            startActivity(intent)
-        }
-
-        // Observar el resultado del login
-        viewModel.loginResult.observe(this) { result ->
-            result.fold(
-                onSuccess = {
-                    Log.d(TAG, "Login exitoso")
-                    hideError()
-
-                    // Crear un Intent explícito para la actividad del menú
-                    val intent = Intent(this@LoginActivity, MenuActivity::class.java)
-
-                    // Agregar flags para limpiar la pila de actividades
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-
-                    Log.d(TAG, "Iniciando MenuActivity desde LoginActivity")
-
-                    // Iniciar la actividad
-                    startActivity(intent)
-
-                    Log.d(TAG, "Después de startActivity para MenuActivity")
-
-                    // Cerrar esta actividad
-                    finish()
-                },
-                onFailure = { error ->
-                    Log.e(TAG, "Error de login: ${error.message}")
-                    showError("Error: ${error.message}")
-
-                    // Mostrar un Toast con información del error
-                    Toast.makeText(
-                        this,
-                        "Error de conexión. Verifica tus credenciales o la conexión al servidor.",
-                        Toast.LENGTH_LONG
-                    ).show()
+            // Configurar el botón de toggle para la contraseña
+            ibTogglePassword.setOnClickListener {
+                try {
+                    togglePasswordVisibility()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error al cambiar visibilidad de contraseña: ${e.message}", e)
                 }
-            )
-        }
-
-        // Observar el estado de carga
-        viewModel.isLoading.observe(this) { isLoading ->
-            if (isLoading) {
-                btnLogin.isEnabled = false
-                btnLogin.text = getString(R.string.logging_in)
-                Toast.makeText(this, "Validando credenciales...", Toast.LENGTH_SHORT).show()
-            } else {
-                btnLogin.isEnabled = true
-                btnLogin.text = getString(R.string.login)
             }
-        }
 
-        // Mostrar información del servidor (opcional, puedes eliminar en producción)
-        Log.d(TAG, "URL del servidor: http://10.228.7.169:8080/ae_byd/api/usuario/login")
+            // Configurar click listener para el botón de login
+            btnLogin.setOnClickListener {
+                try {
+                    attemptLogin()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error al intentar login: ${e.message}", e)
+                    Toast.makeText(this, "Error interno: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+
+            // Configurar el botón para ir al registro
+            btnGoToRegister.setOnClickListener {
+                try {
+                    Log.d(TAG, "Iniciando RegisterActivity")
+                    val intent = Intent(this, RegisterActivity::class.java)
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error al iniciar RegisterActivity: ${e.message}", e)
+                    Toast.makeText(this, "Error al abrir pantalla de registro: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+
+            // Observar el resultado del login
+            viewModel.loginResult.observe(this) { result ->
+                try {
+                    result.fold(
+                        onSuccess = {
+                            Log.d(TAG, "Login exitoso")
+                            hideError()
+
+                            try {
+                                // Crear un Intent explícito para la actividad del menú
+                                val intent = Intent(this@LoginActivity, MenuActivity::class.java)
+
+                                // Usar flags menos agresivos para evitar problemas
+                                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+
+                                Log.d(TAG, "Iniciando MenuActivity desde LoginActivity")
+
+                                // Iniciar la actividad
+                                startActivity(intent)
+
+                                Log.d(TAG, "Después de startActivity para MenuActivity")
+
+                                // Cerrar esta actividad después de iniciar la otra
+                                finish()
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error al iniciar MenuActivity: ${e.message}", e)
+                                Toast.makeText(this, "Error al abrir menú principal: ${e.message}", Toast.LENGTH_LONG).show()
+                            }
+                        },
+                        onFailure = { error ->
+                            Log.e(TAG, "Error de login: ${error.message}")
+                            showError("Error: ${error.message}")
+
+                            // Mostrar un Toast con información del error
+                            Toast.makeText(
+                                this,
+                                "Error de conexión. Verifica tus credenciales o la conexión al servidor.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    )
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error al procesar resultado de login: ${e.message}", e)
+                    Toast.makeText(this, "Error interno: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+
+            // Observar el estado de carga
+            viewModel.isLoading.observe(this) { isLoading ->
+                try {
+                    if (isLoading) {
+                        btnLogin.isEnabled = false
+                        btnLogin.text = getString(R.string.logging_in)
+                        Toast.makeText(this, "Validando credenciales...", Toast.LENGTH_SHORT).show()
+                    } else {
+                        btnLogin.isEnabled = true
+                        btnLogin.text = getString(R.string.login)
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error al actualizar UI durante carga: ${e.message}", e)
+                }
+            }
+
+            Log.d(TAG, "URL del servidor: http://192.168.1.14:8080/ae_byd/api/usuario/login")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error en onCreate: ${e.message}", e)
+            Toast.makeText(this, "Error al iniciar la aplicación: ${e.message}", Toast.LENGTH_LONG).show()
+        }
     }
 
     override fun onResume() {
@@ -158,6 +194,8 @@ class LoginActivity : AppCompatActivity() {
 
         // Ocultar mensajes de error anteriores
         hideError()
+
+        Log.d(TAG, "Intentando login con email: $username")
 
         // Establecemos los valores del ViewModel
         viewModel.email.value = username

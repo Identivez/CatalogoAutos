@@ -7,15 +7,17 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import com.example.catalogoautos.network.ApiClient
+import com.example.catalogoautos.network.NetworkUtils
 import com.example.catalogoautos.repository.UsuarioRepository
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.logging.HttpLoggingInterceptor
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
+import org.json.JSONException
 import org.json.JSONObject
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
+import java.net.ConnectException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 
 class LoginViewModel(application: Application) : AndroidViewModel(application) {
     val email = MutableLiveData<String>()
@@ -30,182 +32,142 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     // Instancia del repositorio para guardar datos del usuario
     private val usuarioRepository = UsuarioRepository(application.applicationContext)
 
-    val TAG = "LoginViewModel"
-
-    // Mejorado: Agregar un interceptor para ver todos los detalles de las peticiones HTTP
-    private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY
-    }
-
-    private val client = OkHttpClient.Builder()
-        .addInterceptor(loggingInterceptor)  // Añadido para mejor depuración
-        .connectTimeout(15, TimeUnit.SECONDS)
-        .readTimeout(15, TimeUnit.SECONDS)
-        .build()
-
-   fun testAllUrls() {
-        val executorService = Executors.newSingleThreadExecutor()
-        executorService.execute {
-            Log.d(TAG, "INICIANDO PRUEBA DE TODAS LAS URLS")
-
-            val baseUrls = listOf(
-                "http://192.168.1.18:8080",
-                "http://192.168.1.18:8080/AE_BYD",
-                "http://192.168.1.18:8080/AE_BYD-1.0-SNAPSHOT",
-                "http://localhost:8080",
-                "http://localhost:8080/AE_BYD",
-                "http://localhost:8080/AE_BYD-1.0-SNAPSHOT"
-            )
-
-            // Primero probar las URLs base con GET
-            for (baseUrl in baseUrls) {
-                try {
-                    val request = Request.Builder()
-                        .url(baseUrl)
-                        .get()
-                        .build()
-
-                    val response = client.newCall(request).execute()
-                    Log.d(TAG, "GET a $baseUrl: ${response.code}")
-
-                    // Si no es 404, registrarlo especialmente
-                    if (response.code != 404) {
-                        Log.d(TAG, "¡¡¡URL base con respuesta diferente a 404: $baseUrl!!!")
-
-                        // Si encontramos una URL base que responde, probamos endpoints debajo
-                        val paths = listOf(
-                            "/api",
-                            "/api/usuario",
-                            "/usuario",
-                            "/api/login",
-                            "/login"
-                        )
-
-                        for (path in paths) {
-                            try {
-                                val pathUrl = baseUrl + path
-                                val pathRequest = Request.Builder()
-                                    .url(pathUrl)
-                                    .get()
-                                    .build()
-
-                                val pathResponse = client.newCall(pathRequest).execute()
-                                Log.d(TAG, "GET a $pathUrl: ${pathResponse.code}")
-
-                                if (pathResponse.code != 404) {
-                                    Log.d(TAG, "¡¡¡URL con subpath con respuesta diferente a 404: $pathUrl!!!")
-                                }
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Error probando $baseUrl$path: ${e.message}")
-                            }
-                        }
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error probando $baseUrl: ${e.message}")
-                }
-            }
-
-            Log.d(TAG, "PRUEBA DE URLS COMPLETADA")
-        }
-    }
+    private val TAG = "LoginViewModel"
 
     fun login() {
+        Log.d(TAG, "Iniciando proceso de login")
+
+        // Validar campos obligatorios
         if (email.value.isNullOrEmpty() || password.value.isNullOrEmpty()) {
+            Log.d(TAG, "Campos obligatorios vacíos")
             _loginResult.postValue(Result.failure(Exception("Por favor, complete todos los campos")))
             return
         }
 
-        _isLoading.postValue(true)
+        _isLoading.value = true
 
-        val executorService = Executors.newSingleThreadExecutor()
-        executorService.execute {
+        // Crear el JSON con los datos de login
+        val loginData = mapOf(
+            "email" to email.value!!,
+            "password" to password.value!!
+        )
+
+        Log.d(TAG, "Iniciando petición al servidor con email: ${email.value}")
+
+        viewModelScope.launch {
             try {
-                
-                val url = "http://192.168.1.14:8080/ae_byd/api/usuario/login"
+                // Usar NetworkUtils para la petición
+                val resultado = NetworkUtils.post(ApiClient.LOGIN_ENDPOINT, loginData)
 
-                // Crear el JSON con los datos de login
-                val json = JSONObject().apply {
-                    put("email", email.value)
-                    put("password", password.value)
-                }
-
-                val mediaType = "application/json".toMediaType()
-                val requestBody = json.toString().toRequestBody(mediaType)
-
-                val request = Request.Builder()
-                    .url(url)
-                    .post(requestBody)
-                    .addHeader("Accept", "application/json")
-                    .addHeader("Content-Type", "application/json")
-                    .build()
-
-                Log.d(TAG, "Enviando solicitud a: $url")
-                Log.d(TAG, "Cuerpo de la solicitud: ${json.toString()}")
-
-                val response = client.newCall(request).execute()
-                val responseBody = response.body?.string()
-
-                Log.d(TAG, "Código de respuesta: ${response.code}")
-                Log.d(TAG, "Cuerpo de respuesta: $responseBody")
-
-                if (response.isSuccessful && responseBody != null) {
-                    try {
-                        val jsonResponse = JSONObject(responseBody)
-
-                        // Extraer datos del usuario - IMPORTANTE: Usar el nombre de campo correcto "usuarioId"
-                        val usuarioId = jsonResponse.optInt("usuarioId", 0)
-                        val nombre = jsonResponse.optString("nombre", "")
-                        val apellido = jsonResponse.optString("apellido", "")
-                        val email = jsonResponse.optString("email", "")
-                        val rol = jsonResponse.optString("rol", "")
-                        val fechaRegistro = jsonResponse.optString("fechaRegistro", "")
-
-                        Log.d(TAG, "Datos extraídos del JSON: ID=$usuarioId, Nombre=$nombre, Apellido=$apellido")
-
-                        // Guardar los datos del usuario en el repositorio
-                        usuarioRepository.setUsuarioActual(
-                            usuarioId, nombre, apellido, email, rol, fechaRegistro
-                        )
-
-                        // Notificar éxito
-                        _loginResult.postValue(Result.success(Unit))
-
-                        Log.d(TAG, "Usuario guardado en sesión: $nombre $apellido")
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Error al procesar respuesta JSON: ${e.message}")
-                        _loginResult.postValue(Result.failure(Exception("Error al procesar respuesta: ${e.message}")))
-                    }
-                } else {
-                    Log.e(TAG, "Error del servidor: Código ${response.code}")
-
-                    // Intentar extraer más detalles del error
-                    val errorMessage = if (responseBody != null && responseBody.isNotEmpty()) {
+                resultado.fold(
+                    onSuccess = { responseBody ->
                         try {
-                            val jsonError = JSONObject(responseBody)
-                            jsonError.optString("message", "Error del servidor")
-                        } catch (e: Exception) {
-                            responseBody
-                        }
-                    } else {
-                        "Error del servidor: Código ${response.code}"
-                    }
+                            Log.d(TAG, "Respuesta exitosa del servidor, procesando JSON")
 
-                    _loginResult.postValue(Result.failure(Exception(errorMessage)))
-                }
+                            if (responseBody.isNullOrEmpty()) {
+                                Log.e(TAG, "Respuesta vacía del servidor")
+                                _loginResult.postValue(Result.failure(Exception("Respuesta vacía del servidor")))
+                                return@fold
+                            }
+
+                            // Imprimir el JSON completo para debugging
+                            Log.d(TAG, "JSON recibido: $responseBody")
+
+                            val jsonResponse = JSONObject(responseBody)
+
+                            // Extraer datos del usuario - CORREGIDO: usando los nombres correctos de campos
+                            val usuarioId = jsonResponse.optInt("usuario_id", 0)  // Cambiado de "usuarioId" a "usuario_id"
+                            val nombre = jsonResponse.optString("nombre", "")
+                            val apellido = jsonResponse.optString("apellido", "")
+                            val email = jsonResponse.optString("email", "")
+                            val rol = jsonResponse.optString("rol", "")
+                            val fechaRegistro = jsonResponse.optString("fecha_registro", "")  // Cambiado de "fechaRegistro" a "fecha_registro"
+
+                            if (usuarioId == 0) {
+                                Log.e(TAG, "ID de usuario no válido en la respuesta")
+                                _loginResult.postValue(Result.failure(Exception("Datos de usuario no válidos")))
+                                return@fold
+                            }
+
+                            Log.d(TAG, "Datos extraídos del JSON: ID=$usuarioId, Nombre=$nombre, Apellido=$apellido")
+
+                            // Guardar los datos del usuario en el repositorio
+                            try {
+                                usuarioRepository.setUsuarioActual(
+                                    usuarioId, nombre, apellido, email, rol, fechaRegistro
+                                )
+                                Log.d(TAG, "Usuario guardado en sesión: $nombre $apellido")
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error al guardar usuario en sesión: ${e.message}", e)
+                                _loginResult.postValue(Result.failure(Exception("Error al guardar datos de usuario: ${e.message}")))
+                                return@fold
+                            }
+
+                            // Notificar éxito
+                            _loginResult.postValue(Result.success(Unit))
+
+                        } catch (e: JSONException) {
+                            // Error específico de formato JSON
+                            Log.e(TAG, "Error al procesar JSON: ${e.message}", e)
+
+                            // Intentar mostrar el JSON que causó el error
+                            Log.e(TAG, "JSON que causó el error: $responseBody")
+
+                            _loginResult.postValue(Result.failure(Exception("Error al procesar la respuesta del servidor: ${e.message}")))
+                        } catch (e: Exception) {
+                            // Cualquier otro error al procesar la respuesta
+                            Log.e(TAG, "Error al procesar respuesta: ${e.message}", e)
+                            _loginResult.postValue(Result.failure(Exception("Error al procesar respuesta: ${e.message}")))
+                        }
+                    },
+                    onFailure = { error ->
+                        // Personalizar mensaje según el tipo de error
+                        val mensaje = when (error) {
+                            is UnknownHostException -> "No se pudo conectar al servidor. Verifique su conexión a Internet."
+                            is ConnectException -> "Error de conexión al servidor. El servidor puede estar caído."
+                            is SocketTimeoutException -> "La conexión con el servidor ha tardado demasiado. Inténtelo nuevamente."
+                            else -> "Error en el inicio de sesión: ${error.message}"
+                        }
+
+                        Log.e(TAG, "Error en la petición de login: $mensaje", error)
+                        _loginResult.postValue(Result.failure(Exception(mensaje)))
+                    }
+                )
+            } catch (e: CancellationException) {
+                // Las excepciones de cancelación de coroutine no deben ser capturadas como errores
+                throw e
             } catch (e: Exception) {
-                Log.e(TAG, "Error de conexión: ${e.message}")
-                e.printStackTrace()
+                // Cualquier otra excepción durante la petición
+                Log.e(TAG, "Error general de conexión: ${e.message}", e)
                 _loginResult.postValue(Result.failure(Exception("Error de conexión: ${e.message}")))
             } finally {
+                // Siempre deshabilitar el estado de carga
                 _isLoading.postValue(false)
-                executorService.shutdown()
-                try {
-                    executorService.awaitTermination(3, TimeUnit.SECONDS)
-                } catch (e: InterruptedException) {
-                    Log.e(TAG, "Error al esperar terminación del executor: ${e.message}")
-                }
+                Log.d(TAG, "Proceso de login finalizado")
             }
         }
+    }
+
+    // Método auxiliar para manejar diferentes formatos de JSON
+    private fun extractUserId(jsonResponse: JSONObject): Int {
+        // Intentar con ambos formatos posibles para mayor robustez
+        val usuarioId = when {
+            jsonResponse.has("usuario_id") -> jsonResponse.optInt("usuario_id", 0)
+            jsonResponse.has("usuarioId") -> jsonResponse.optInt("usuarioId", 0)
+            else -> 0
+        }
+
+        if (usuarioId == 0) {
+            // Registrar todos los campos disponibles para debug
+            val keys = jsonResponse.keys()
+            val availableFields = mutableListOf<String>()
+            while (keys.hasNext()) {
+                availableFields.add(keys.next())
+            }
+            Log.d(TAG, "Campos disponibles en el JSON: $availableFields")
+        }
+
+        return usuarioId
     }
 
     // Factory para crear instancias del ViewModel con el contexto de la aplicación

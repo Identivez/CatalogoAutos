@@ -6,8 +6,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.catalogoautos.network.ApiClient
+import com.example.catalogoautos.network.NetworkUtils
 import kotlinx.coroutines.launch
-import org.json.JSONObject
 
 class RegisterViewModel : ViewModel() {
 
@@ -22,7 +22,7 @@ class RegisterViewModel : ViewModel() {
     private val _result = MutableLiveData<Result<Unit>>()
     val result: LiveData<Result<Unit>> = _result
 
-    val TAG = "RegisterViewModel"
+    private val TAG = "RegisterViewModel"
 
     fun register() {
         // Validar campos
@@ -59,14 +59,19 @@ class RegisterViewModel : ViewModel() {
         // Usar coroutines para la llamada a la API
         viewModelScope.launch {
             try {
-                val response = ApiClient.userApi.register(usuarioMap)
+                // Usar NetworkUtils para la petición
+                val resultado = NetworkUtils.post(ApiClient.USER_ENDPOINT, usuarioMap)
 
-                if (response.isSuccessful) {
-                    _result.value = Result.success(Unit)
-                } else {
-                    val errorBody = response.errorBody()?.string() ?: "Error desconocido"
-                    _result.value = Result.failure(Exception(errorBody))
-                }
+                resultado.fold(
+                    onSuccess = {
+                        Log.d(TAG, "Registro exitoso")
+                        _result.value = Result.success(Unit)
+                    },
+                    onFailure = { error ->
+                        Log.e(TAG, "Error en el registro: ${error.message}")
+                        _result.value = Result.failure(error)
+                    }
+                )
             } catch (e: Exception) {
                 Log.e(TAG, "Error en la llamada API: ${e.message}")
                 _result.value = Result.failure(e)

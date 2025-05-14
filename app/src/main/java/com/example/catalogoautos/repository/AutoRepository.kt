@@ -6,6 +6,7 @@ import android.util.Log
 import com.example.catalogoautos.model.Auto
 import com.example.catalogoautos.network.ApiClient
 import com.example.catalogoautos.network.AutoMap
+import com.example.catalogoautos.network.NetworkUtils
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonDeserializationContext
@@ -21,17 +22,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.logging.HttpLoggingInterceptor
 import java.lang.reflect.Type
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.concurrent.TimeUnit
 
 class AutoRepository(private val context: Context) {
+
+    private val TAG = "AutoRepository"
 
     // Configuración de Gson con adaptadores personalizados para LocalDateTime
     private val gson: Gson = GsonBuilder()
@@ -191,129 +188,11 @@ class AutoRepository(private val context: Context) {
         }
     }
 
-    // Función para probar diferentes URLs
-    suspend fun probarConexiones() {
-        withContext(Dispatchers.IO) {
-            val client = OkHttpClient.Builder()
-                .addInterceptor(HttpLoggingInterceptor().apply {
-                    level = HttpLoggingInterceptor.Level.BODY
-                })
-                .connectTimeout(10, TimeUnit.SECONDS)
-                .readTimeout(10, TimeUnit.SECONDS)
-                .build()
-
-            val urls = listOf(
-                "http://192.168.1.14:8080",
-                "http://192.168.1.14:8080/api",
-                "http://192.168.1.14:8080/api/auto",
-                "http://192.168.1.14:8080/auto"
-            )
-
-            for (url in urls) {
-                try {
-                    val request = Request.Builder()
-                        .url(url)
-                        .get()
-                        .build()
-
-                    val response = client.newCall(request).execute()
-                    Log.d(TAG, "URL: $url - Código: ${response.code}")
-
-                    if (response.isSuccessful) {
-                        Log.d(TAG, "URL EXITOSA: $url")
-                        // Guardar preferencia de URL si es necesario
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error al probar URL $url: ${e.message}")
-                }
-            }
-        }
-    }
-
-    // Método alternativo que usa directamente OkHttp en caso de problemas con Retrofit
-    suspend fun agregarAutoDirecto(auto: Auto): Result<Auto> {
-        return withContext(Dispatchers.IO) {
-            try {
-                Log.d(TAG, "Intentando guardar auto directamente con OkHttp: ${auto.modelo}")
-
-                // Asignar un nuevo ID si es 0
-                val autoConId = if (auto.auto_id == 0) {
-                    auto.copy(auto_id = generarNuevoId())
-                } else {
-                    auto
-                }
-
-                // Cliente OkHttp
-                val client = OkHttpClient.Builder()
-                    .addInterceptor(HttpLoggingInterceptor().apply {
-                        level = HttpLoggingInterceptor.Level.BODY
-                    })
-                    .connectTimeout(30, TimeUnit.SECONDS)
-                    .readTimeout(30, TimeUnit.SECONDS)
-                    .writeTimeout(30, TimeUnit.SECONDS)
-                    .build()
-
-                // Convertir a JSON
-                val json = gson.toJson(autoToMap(autoConId))
-
-                // URL explícita y completa
-                val url = "http://192.168.1.14:8080/api/auto"
-
-                // Crear el cuerpo de la petición
-                val requestBody = json.toRequestBody("application/json".toMediaTypeOrNull())
-
-                // Crear la petición
-                val request = Request.Builder()
-                    .url(url)
-                    .post(requestBody)
-                    .build()
-
-                // Ejecutar la petición
-                val response = client.newCall(request).execute()
-
-                if (response.isSuccessful) {
-                    Log.d(TAG, "Éxito al guardar en el servidor usando OkHttp directo")
-
-                    // Guardar localmente también
-                    agregarAuto(autoConId)
-
-                    Result.success(autoConId)
-                } else {
-                    Log.e(TAG, "Error del servidor usando OkHttp directo: ${response.code} - ${response.message}")
-
-                    // Si el servidor falla, guardar localmente de todos modos
-                    agregarAuto(autoConId)
-                    Result.failure(Exception("Error en el servidor: ${response.message}"))
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error de conexión usando OkHttp directo: ${e.message}", e)
-
-                // Manejar el error creando autoParaGuardar dentro de este ámbito
-                val autoParaGuardar = if (auto.auto_id == 0) {
-                    auto.copy(auto_id = generarNuevoId())
-                } else {
-                    auto
-                }
-
-                // Si hay excepción (error de conexión), guardar localmente
-                agregarAuto(autoParaGuardar)
-                Result.failure(e)
-            }
-        }
-    }
-
     // Método para intentar agregar un auto al servidor, con fallback a local
     suspend fun agregarAutoRemoto(auto: Auto): Result<Auto> {
-        // Probar URLs primero
-        probarConexiones()
-
         return withContext(Dispatchers.IO) {
             try {
                 Log.d(TAG, "Intentando guardar auto en el servidor: ${auto.modelo}")
-
-                // Imprimir la URL que usará Retrofit
-                val urlCompleta = ApiClient.getBaseUrl() + "auto"
-                Log.d(TAG, "URL completa para la petición: $urlCompleta")
 
                 // Asignar un nuevo ID si es 0
                 val autoConId = if (auto.auto_id == 0) {
@@ -325,56 +204,49 @@ class AutoRepository(private val context: Context) {
                 // Convertir el auto a HashMap para la API
                 val autoMap = autoToMap(autoConId)
 
-                // Intentar guardar en el servidor
-                val response = ApiClient.autoApi.agregarAuto(autoMap)
+                // Usar NetworkUtils para la petición
+                val resultado = NetworkUtils.post(ApiClient.AUTO_ENDPOINT, autoMap)
 
-                if (response.isSuccessful) {
-                    Log.d(TAG, "Éxito al guardar en el servidor. Código: ${response.code()}")
+                resultado.fold(
+                    onSuccess = { responseBody ->
+                        Log.d(TAG, "Éxito al guardar en el servidor, respuesta: $responseBody")
 
-                    // Convertir la respuesta a Auto
-                    val autoServidor = response.body()?.let { mapToAuto(it) } ?: autoConId
+                        // Guardar localmente también
+                        agregarAuto(autoConId)
 
-                    // Agregar a la lista local
-                    _autos.update { currentList ->
-                        val newList = currentList + autoServidor
-                        newList
+                        // Si hay respuesta, intentar convertirla a Auto
+                        if (responseBody.isNotEmpty()) {
+                            try {
+                                val responseMap = gson.fromJson(responseBody, object : TypeToken<Map<String, Any>>() {}.type) as Map<String, Any>
+                                val autoServidor = mapToAuto(responseMap)
+                                Result.success(autoServidor)
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error al procesar respuesta JSON: ${e.message}")
+                                Result.success(autoConId)
+                            }
+                        } else {
+                            Result.success(autoConId)
+                        }
+                    },
+                    onFailure = { error ->
+                        Log.e(TAG, "Error del servidor: ${error.message}")
+
+                        // Si el servidor falla, guardar localmente de todos modos
+                        agregarAuto(autoConId)
+                        Result.failure(Exception("Error en el servidor: ${error.message}"))
                     }
-                    guardarAutosEnPreferences()
-
-                    Result.success(autoServidor)
-                } else {
-                    Log.e(TAG, "Error del servidor: ${response.code()} - ${response.message()}")
-
-                    // Si el servidor falla con 404, intentar con el método directo
-                    if (response.code() == 404) {
-                        Log.d(TAG, "Intentando método alternativo directo con OkHttp")
-                        return@withContext agregarAutoDirecto(auto)
-                    }
-
-                    // Si el servidor falla, guardar localmente de todos modos
-                    agregarAuto(autoConId)
-                    Result.failure(Exception("Error en el servidor: ${response.message()}"))
-                }
+                )
             } catch (e: Exception) {
-                Log.e(TAG, "Error de conexión: ${e.message}", e)
+                Log.e(TAG, "Error general al agregar auto: ${e.message}", e)
 
-                // Si hay un error de Retrofit, intentar con el método directo
-                Log.d(TAG, "Intentando método alternativo directo con OkHttp debido a excepción")
-                try {
-                    return@withContext agregarAutoDirecto(auto)
-                } catch (e2: Exception) {
-                    Log.e(TAG, "Error también con el método directo: ${e2.message}")
-
-                    // Si ambos métodos fallan, guardar localmente como último recurso
-                    val autoParaGuardar = if (auto.auto_id == 0) {
-                        auto.copy(auto_id = generarNuevoId())
-                    } else {
-                        auto
-                    }
-
-                    agregarAuto(autoParaGuardar)
-                    Result.failure(e2)
+                // Si hay excepción general, guardar localmente
+                val autoParaGuardar = if (auto.auto_id == 0) {
+                    auto.copy(auto_id = generarNuevoId())
+                } else {
+                    auto
                 }
+                agregarAuto(autoParaGuardar)
+                Result.failure(e)
             }
         }
     }
@@ -385,35 +257,44 @@ class AutoRepository(private val context: Context) {
             try {
                 Log.d(TAG, "Intentando actualizar auto en el servidor: ID=${auto.auto_id}")
 
-                // Imprimir la URL que usará Retrofit
-                val urlCompleta = ApiClient.getBaseUrl() + "auto/" + auto.auto_id
-                Log.d(TAG, "URL completa para la petición: $urlCompleta")
-
                 // Convertir el auto a HashMap para la API
                 val autoMap = autoToMap(auto)
 
-                // Intentar actualizar en el servidor
-                val response = ApiClient.autoApi.actualizarAuto(auto.auto_id, autoMap)
+                // Usar NetworkUtils para la petición
+                val endpoint = "${ApiClient.AUTO_ENDPOINT}/${auto.auto_id}"
+                val resultado = NetworkUtils.put(endpoint, autoMap)
 
-                if (response.isSuccessful) {
-                    Log.d(TAG, "Éxito al actualizar en el servidor. Código: ${response.code()}")
+                resultado.fold(
+                    onSuccess = { responseBody ->
+                        Log.d(TAG, "Éxito al actualizar en el servidor, respuesta: $responseBody")
 
-                    // Convertir la respuesta a Auto
-                    val autoServidor = response.body()?.let { mapToAuto(it) } ?: auto
+                        // Actualizar localmente
+                        actualizarAuto(auto)
 
-                    // Actualizar la versión local
-                    actualizarAuto(autoServidor)
+                        // Si hay respuesta, intentar convertirla a Auto
+                        if (responseBody.isNotEmpty()) {
+                            try {
+                                val responseMap = gson.fromJson(responseBody, object : TypeToken<Map<String, Any>>() {}.type) as Map<String, Any>
+                                val autoServidor = mapToAuto(responseMap)
+                                Result.success(autoServidor)
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error al procesar respuesta JSON: ${e.message}")
+                                Result.success(auto)
+                            }
+                        } else {
+                            Result.success(auto)
+                        }
+                    },
+                    onFailure = { error ->
+                        Log.e(TAG, "Error del servidor al actualizar: ${error.message}")
 
-                    Result.success(autoServidor)
-                } else {
-                    Log.e(TAG, "Error del servidor al actualizar: ${response.code()} - ${response.message()}")
-
-                    // Si el servidor falla, actualizar localmente de todos modos
-                    actualizarAuto(auto)
-                    Result.failure(Exception("Error en el servidor: ${response.message()}"))
-                }
+                        // Si el servidor falla, actualizar localmente de todos modos
+                        actualizarAuto(auto)
+                        Result.failure(error)
+                    }
+                )
             } catch (e: Exception) {
-                Log.e(TAG, "Error de conexión al actualizar: ${e.message}", e)
+                Log.e(TAG, "Error general al actualizar auto: ${e.message}", e)
 
                 // Si hay excepción, actualizar localmente
                 actualizarAuto(auto)
@@ -428,26 +309,73 @@ class AutoRepository(private val context: Context) {
             try {
                 Log.d(TAG, "Intentando sincronizar autos desde el servidor")
 
-                // Obtener los autos del servidor
-                val response = ApiClient.autoApi.obtenerTodos()
+                // Usar NetworkUtils para la petición
+                val resultado = NetworkUtils.get(ApiClient.AUTO_ENDPOINT)
 
-                if (response.isSuccessful) {
-                    // Convertir la respuesta a Lista de Autos
-                    val autosServidor = response.body()?.map { mapToAuto(it) } ?: emptyList()
+                resultado.fold(
+                    onSuccess = { responseBody ->
+                        try {
+                            // Convertir el JSON a lista de Autos
+                            val listType = object : TypeToken<List<Map<String, Any>>>() {}.type
+                            val listaMapas: List<Map<String, Any>> = gson.fromJson(responseBody, listType)
+                            val autosServidor = listaMapas.map { mapToAuto(it) }
 
-                    Log.d(TAG, "Autos obtenidos del servidor: ${autosServidor.size}")
+                            Log.d(TAG, "Autos sincronizados del servidor: ${autosServidor.size}")
 
-                    // Actualizar la caché local
-                    _autos.value = autosServidor
-                    guardarAutosEnPreferences()
+                            // Actualizar la caché local
+                            _autos.value = autosServidor
+                            guardarAutosEnPreferences()
 
-                    Result.success(autosServidor)
-                } else {
-                    Log.e(TAG, "Error al obtener autos del servidor: ${response.code()} - ${response.message()}")
-                    Result.failure(Exception("Error al obtener autos: ${response.message()}"))
-                }
+                            Result.success(autosServidor)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error al procesar la respuesta JSON: ${e.message}")
+                            Result.failure(e)
+                        }
+                    },
+                    onFailure = { error ->
+                        Log.e(TAG, "Error al obtener autos del servidor: ${error.message}")
+                        Result.failure(error)
+                    }
+                )
             } catch (e: Exception) {
-                Log.e(TAG, "Error de conexión al sincronizar: ${e.message}", e)
+                Log.e(TAG, "Error de conexión al sincronizar: ${e.message}")
+                Result.failure(e)
+            }
+        }
+    }
+
+    // Método para eliminar un auto en el servidor y localmente
+    suspend fun eliminarAutoRemoto(autoId: Int): Result<Unit> {
+        return withContext(Dispatchers.IO) {
+            try {
+                Log.d(TAG, "Intentando eliminar auto del servidor: ID=$autoId")
+
+                // Usar NetworkUtils para la petición
+                val endpoint = "${ApiClient.AUTO_ENDPOINT}/$autoId"
+                val resultado = NetworkUtils.delete(endpoint)
+
+                resultado.fold(
+                    onSuccess = {
+                        Log.d(TAG, "Éxito al eliminar del servidor: ID=$autoId")
+
+                        // Eliminar localmente también
+                        eliminarAuto(autoId)
+
+                        Result.success(Unit)
+                    },
+                    onFailure = { error ->
+                        Log.e(TAG, "Error del servidor al eliminar: ${error.message}")
+
+                        // Si el servidor falla, eliminar localmente de todos modos
+                        eliminarAuto(autoId)
+                        Result.failure(error)
+                    }
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Error general al eliminar auto: ${e.message}", e)
+
+                // Si hay excepción, eliminar localmente
+                eliminarAuto(autoId)
                 Result.failure(e)
             }
         }
@@ -547,7 +475,6 @@ class AutoRepository(private val context: Context) {
     }
 
     companion object {
-        private const val TAG = "AutoRepository"
         private const val AUTOS_KEY = "autos_list"
 
         @Volatile
