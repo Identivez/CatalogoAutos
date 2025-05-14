@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit
 object ApiClient {
 
     // URL base centralizada - solo hay que cambiarla aquí
-    private const val BASE_URL = "http://10.250.3.8:8080/AE_BYD/api/"
+    private const val BASE_URL = "http://192.168.1.19:8080/AE_BYD/api/"
 
     // Constantes para los endpoints específicos
     const val AUTO_ENDPOINT = "auto"

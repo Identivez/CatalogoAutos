@@ -57,8 +57,8 @@
         <activity
             android:name=".view.InventarioActivity"
             android:exported="false"
-            android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
-            android:parentActivityName=".view.MenuActivity" />
+            android:theme="@style/Theme.MaterialComponents.Light.DarkActionBar"
+            android:parentActivityName=".view.MenuActivity"/>
 
         <activity
             android:name=".view.DetalleAutoActivity"
@@ -66,11 +66,10 @@
             android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
             android:parentActivityName=".view.InventarioActivity" />
 
-        <!-- Actividad para el catálogo de autos -->
         <activity
             android:name=".view.CatalogoAutosActivity"
             android:exported="false"
-            android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+            android:theme="@style/Theme.CatalogoAutos"
             android:parentActivityName=".view.MenuActivity" />
 
         <!-- Actividad principal original (puedes eliminarla si no la usarás) -->
