@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="filtros_ventas">
+        <item>Todas las ventas</item>
+        <item>Completadas</item>
+        <item>Pendientes</item>
+        <item>Entregadas</item>
+        <item>Canceladas</item>
+    </string-array>
+</resources>

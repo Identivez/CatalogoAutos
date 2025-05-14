@@ -25,6 +25,8 @@ class MenuActivity : AppCompatActivity() {
     private lateinit var cardInventario: CardView
     private lateinit var cardCatalogo: CardView
     private lateinit var cardDetalle: CardView
+    // Declaramos la variable pero no la inicializamos todavía
+    private var cardVentas: CardView? = null
 
     private lateinit var viewModel: MenuViewModel
     private val TAG = "MenuActivity"
@@ -83,6 +85,15 @@ class MenuActivity : AppCompatActivity() {
             cardInventario = findViewById(R.id.cardInventario)
             cardCatalogo = findViewById(R.id.cardCatalogo)
             cardDetalle = findViewById(R.id.cardDetalle)
+
+            // Intentamos inicializar la card de ventas, pero no fallamos si no existe
+            try {
+                cardVentas = findViewById(R.id.cardVentas)
+                Log.d(TAG, "Card de ventas inicializada correctamente")
+            } catch (e: Exception) {
+                Log.w(TAG, "La card de ventas no existe en el layout: ${e.message}")
+                // No hacemos throw aquí para que la app siga funcionando
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error al inicializar vistas: ${e.message}", e)
             throw e  // Relanzamos la excepción para manejarla en onCreate
@@ -165,10 +176,10 @@ class MenuActivity : AppCompatActivity() {
                     startActivity(Intent(this, CatalogoAutosActivity::class.java))
                 } catch (e: Exception) {
                     Log.e(TAG, "Error al iniciar CatalogoAutosActivity: ${e.message}", e)
-                    Toast.makeText(this, "Error al abrir catálogo: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Error al abrir catálogo: ${e.message}", Toast.LENGTH_SHORT)
+                        .show()
                 }
             }
-
             cardDetalle.setOnClickListener {
                 try {
                     Log.d(TAG, "Iniciando DetalleAutoActivity")
@@ -176,6 +187,17 @@ class MenuActivity : AppCompatActivity() {
                 } catch (e: Exception) {
                     Log.e(TAG, "Error al iniciar DetalleAutoActivity: ${e.message}", e)
                     Toast.makeText(this, "Error al abrir detalles: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            // Configurar listener para la card de ventas si existe
+            cardVentas?.setOnClickListener {
+                try {
+                    Log.d(TAG, "Iniciando VentasActivity")
+                    startActivity(Intent(this, VentasActivity::class.java))
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error al iniciar VentasActivity: ${e.message}", e)
+                    Toast.makeText(this, "Error al abrir gestión de ventas: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
 

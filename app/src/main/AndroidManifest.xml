@@ -71,6 +71,21 @@
             android:exported="false"
             android:theme="@style/Theme.CatalogoAutos"
             android:parentActivityName=".view.MenuActivity" />
+        <!-- Actividades para el servicio de ventas -->
+        <activity
+            android:name=".view.VentasActivity"
+            android:exported="false"
+            android:parentActivityName=".view.MenuActivity" />
+
+        <activity
+            android:name=".view.RegistrarVentaActivity"
+            android:exported="false"
+            android:parentActivityName=".view.VentasActivity" />
+
+        <activity
+            android:name=".view.DetalleVentaActivity"
+            android:exported="false"
+            android:parentActivityName=".view.VentasActivity" />
 
         <!-- Actividad principal original (puedes eliminarla si no la usarás) -->
         <activity
