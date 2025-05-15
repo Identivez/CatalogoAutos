@@ -93,4 +93,13 @@ dependencies {
     implementation("androidx.room:room-ktx:2.6.1")
     implementation("com.google.android.material:material:1.10.0")
 
+    // Librería para generar PDFs
+    implementation ("com.itextpdf:itext7-core:7.2.4")
+
+    // Para solicitar permisos en tiempo de ejecución
+    implementation ("androidx.activity:activity-result:1.6.1")
+
+    // Para guardar archivos
+    implementation ("androidx.documentfile:documentfile:1.0.1")
+
 }

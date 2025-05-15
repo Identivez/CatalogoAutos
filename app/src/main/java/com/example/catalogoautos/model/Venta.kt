@@ -21,6 +21,6 @@ data class Venta(
         // Lista de estados válidos según la base de datos
         val ESTADOS_VALIDOS = listOf(ESTADO_PENDIENTE, ESTADO_COMPLETADA, ESTADO_ENTREGADA, ESTADO_CANCELADA)
 
-        // Resto del código...
+       
     }
 }
