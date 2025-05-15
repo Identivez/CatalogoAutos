@@ -1,54 +1,26 @@
-// Venta.kt
-package com.example.catalogoautos.model
-
-import org.json.JSONObject
 import java.math.BigDecimal
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
+// En app/src/main/java/com/example/catalogoautos/model/Venta.kt
 data class Venta(
     val ventaId: Int = 0,
     val nSerie: String,
     val cantidad: Int = 1,
     val precio: BigDecimal,
-    val estatus: String = "COMPLETADA",
+    // Cambia el valor por defecto a "PENDIENTE" en lugar de "COMPLETADA"
+    val estatus: String = "PENDIENTE",
     val fechaVenta: LocalDateTime = LocalDateTime.now()
 ) {
     companion object {
-        fun fromJson(json: String?): Venta {
-            val jsonObject = JSONObject(json ?: "{}")
+        // Define constantes para los estados permitidos
+        const val ESTADO_PENDIENTE = "PENDIENTE"
+        const val ESTADO_COMPLETADA = "COMPLETADA"
+        const val ESTADO_ENTREGADA = "ENTREGADA"
+        const val ESTADO_CANCELADA = "CANCELADA"
 
-            // Parsear fecha
-            val fechaStr = jsonObject.optString("fechaVenta", "")
-            val fecha = if (fechaStr.isNotEmpty()) {
-                try {
-                    LocalDateTime.parse(fechaStr)
-                } catch (e: Exception) {
-                    LocalDateTime.now()
-                }
-            } else {
-                LocalDateTime.now()
-            }
+        // Lista de estados válidos según la base de datos
+        val ESTADOS_VALIDOS = listOf(ESTADO_PENDIENTE, ESTADO_COMPLETADA, ESTADO_ENTREGADA, ESTADO_CANCELADA)
 
-            return Venta(
-                ventaId = jsonObject.optInt("ventaId", 0),
-                nSerie = jsonObject.optString("nSerie", ""),
-                cantidad = jsonObject.optInt("cantidad", 1),
-                precio = BigDecimal(jsonObject.optString("precio", "0")),
-                estatus = jsonObject.optString("estatus", "COMPLETADA"),
-                fechaVenta = fecha
-            )
-        }
-
-        fun toJson(venta: Venta): JSONObject {
-            val jsonObject = JSONObject()
-            jsonObject.put("ventaId", venta.ventaId)
-            jsonObject.put("nSerie", venta.nSerie)
-            jsonObject.put("cantidad", venta.cantidad)
-            jsonObject.put("precio", venta.precio.toString())
-            jsonObject.put("estatus", venta.estatus)
-            jsonObject.put("fechaVenta", venta.fechaVenta.toString())
-            return jsonObject
-        }
+        // Resto del código...
     }
 }

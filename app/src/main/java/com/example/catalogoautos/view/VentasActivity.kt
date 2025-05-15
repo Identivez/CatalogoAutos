@@ -1,6 +1,7 @@
 // VentasActivity.kt
 package com.example.catalogoautos.view
 
+import Venta
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -12,7 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.catalogoautos.R
 import com.example.catalogoautos.view.VentasAdapter
 import com.example.catalogoautos.databinding.ActivityVentasBinding
-import com.example.catalogoautos.model.Venta
+
 import com.example.catalogoautos.viewmodel.VentasViewModel
 
 class VentasActivity : AppCompatActivity() {

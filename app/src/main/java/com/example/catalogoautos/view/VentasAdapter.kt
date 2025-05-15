@@ -1,13 +1,14 @@
 // VentasAdapter.kt
 package com.example.catalogoautos.view
 
+import Venta
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.catalogoautos.R
-import com.example.catalogoautos.model.Venta
+
 import java.text.NumberFormat
 import java.time.format.DateTimeFormatter
 import java.util.Locale

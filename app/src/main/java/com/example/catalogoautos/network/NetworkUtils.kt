@@ -25,6 +25,7 @@ object NetworkUtils {
                 .get()
                 .build()
 
+            // Realizar la petición en un hilo de fondo
             val response = ApiClient.httpClient.newCall(request).execute()
 
             if (response.isSuccessful) {
@@ -50,13 +51,14 @@ object NetworkUtils {
             Log.d(TAG, "POST request to: $url")
             Log.d(TAG, "POST body: $jsonString")
 
-            val requestBody = jsonString.toRequestBody("application/json".toMediaTypeOrNull())
+            val requestBody = jsonString.toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
 
             val request = Request.Builder()
                 .url(url)
                 .post(requestBody)
                 .build()
 
+            // Realizar la petición en un hilo de fondo
             val response = ApiClient.httpClient.newCall(request).execute()
 
             if (response.isSuccessful) {
@@ -64,8 +66,10 @@ object NetworkUtils {
                 Log.d(TAG, "POST successful, response: ${body.take(100)}...")
                 Result.success(body)
             } else {
+                val errorBody = response.body?.string() ?: ""
                 Log.e(TAG, "Error in POST to $url: ${response.code} - ${response.message}")
-                Result.failure(IOException("Error ${response.code}: ${response.message}"))
+                Log.e(TAG, "Error body: $errorBody")
+                Result.failure(IOException("Error ${response.code}: ${response.message}\nError body: $errorBody"))
             }
         } catch (e: Exception) {
             Log.e(TAG, "Exception in POST to $endpoint: ${e.message}")
@@ -90,13 +94,14 @@ object NetworkUtils {
             Log.d(TAG, "PUT request to: $url")
             Log.d(TAG, "PUT body: $jsonString")
 
-            val requestBody = jsonString.toRequestBody("application/json".toMediaTypeOrNull())
+            val requestBody = jsonString.toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
 
             val request = Request.Builder()
                 .url(url)
                 .put(requestBody)
                 .build()
 
+            // Realizar la petición en un hilo de fondo
             val response = ApiClient.httpClient.newCall(request).execute()
 
             if (response.isSuccessful) {
@@ -104,8 +109,10 @@ object NetworkUtils {
                 Log.d(TAG, "PUT successful, response: ${body.take(100)}...")
                 Result.success(body)
             } else {
+                val errorBody = response.body?.string() ?: ""
                 Log.e(TAG, "Error in PUT to $url: ${response.code} - ${response.message}")
-                Result.failure(IOException("Error ${response.code}: ${response.message}"))
+                Log.e(TAG, "Error body: $errorBody")
+                Result.failure(IOException("Error ${response.code}: ${response.message}\nError body: $errorBody"))
             }
         } catch (e: Exception) {
             Log.e(TAG, "Exception in PUT to $endpoint: ${e.message}")
@@ -134,6 +141,7 @@ object NetworkUtils {
                 .delete()
                 .build()
 
+            // Realizar la petición en un hilo de fondo
             val response = ApiClient.httpClient.newCall(request).execute()
 
             if (response.isSuccessful) {
@@ -141,12 +149,33 @@ object NetworkUtils {
                 Log.d(TAG, "DELETE successful, response: ${body.take(100)}...")
                 Result.success(body)
             } else {
+                val errorBody = response.body?.string() ?: ""
                 Log.e(TAG, "Error in DELETE to $url: ${response.code} - ${response.message}")
-                Result.failure(IOException("Error ${response.code}: ${response.message}"))
+                Log.e(TAG, "Error body: $errorBody")
+                Result.failure(IOException("Error ${response.code}: ${response.message}\nError body: $errorBody"))
             }
         } catch (e: Exception) {
             Log.e(TAG, "Exception in DELETE to $endpoint: ${e.message}")
             Result.failure(e)
+        }
+    }
+
+    /**
+     * Verifica la conectividad con el servidor
+     */
+    suspend fun verificarConectividad(): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val url = ApiClient.getBaseUrl()
+            val request = Request.Builder()
+                .url(url)
+                .head()  // HEAD es más ligero que GET
+                .build()
+
+            val response = ApiClient.httpClient.newCall(request).execute()
+            return@withContext response.isSuccessful
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al verificar conectividad: ${e.message}")
+            return@withContext false
         }
     }
 }

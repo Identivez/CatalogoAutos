@@ -1,6 +1,7 @@
 // DetalleVentaActivity.kt (continuación)
 package com.example.catalogoautos.view
 
+import Venta
 import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
@@ -9,7 +10,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.example.catalogoautos.databinding.ActivityDetalleVentaBinding
-import com.example.catalogoautos.model.Venta
+
 import com.example.catalogoautos.viewmodel.VentasViewModel
 import java.text.NumberFormat
 import java.time.format.DateTimeFormatter
