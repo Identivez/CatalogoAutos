@@ -84,7 +84,7 @@ class MenuActivity : AppCompatActivity() {
             cardAgregarAuto = findViewById(R.id.cardAgregarAuto)
             cardInventario = findViewById(R.id.cardInventario)
             cardCatalogo = findViewById(R.id.cardCatalogo)
-            cardDetalle = findViewById(R.id.cardDetalle)
+
 
             // Intentamos inicializar la card de ventas, pero no fallamos si no existe
             try {
@@ -180,15 +180,7 @@ class MenuActivity : AppCompatActivity() {
                         .show()
                 }
             }
-            cardDetalle.setOnClickListener {
-                try {
-                    Log.d(TAG, "Iniciando DetalleAutoActivity")
-                    startActivity(Intent(this, DetalleAutoActivity::class.java))
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error al iniciar DetalleAutoActivity: ${e.message}", e)
-                    Toast.makeText(this, "Error al abrir detalles: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
-            }
+
 
             // Configurar listener para la card de ventas si existe
             cardVentas?.setOnClickListener {

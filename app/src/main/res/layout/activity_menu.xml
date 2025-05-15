@@ -7,23 +7,23 @@
     android:background="@color/white"
     tools:context=".view.MenuActivity">
 
-    <!-- Contenedor principal (ahora ocupa toda la pantalla) -->
+    <!-- Contenedor principal -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/mainContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingStart="20dp"
-        android:paddingTop="16dp"
-        android:paddingEnd="20dp"
-        android:paddingBottom="16dp"
+        android:paddingStart="24dp"
+        android:paddingTop="20dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="20dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <!-- Sección superior con perfil y título -->
         <ImageView
             android:id="@+id/profileImage"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:contentDescription="Perfil"
             android:src="@drawable/ic_profile"
             app:layout_constraintBottom_toBottomOf="@+id/tvBienvenida"
@@ -32,20 +32,23 @@
 
         <TextView
             android:id="@+id/tvBienvenida"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
             android:text="Bienvenido a BYD"
+            android:textAlignment="center"
             android:textColor="#0052A5"
-            android:textSize="22sp"
+            android:textSize="24sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/btnLogout"
+            app:layout_constraintStart_toEndOf="@+id/profileImage"
             app:layout_constraintTop_toTopOf="parent" />
 
         <ImageButton
             android:id="@+id/btnLogout"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Cerrar Sesión"
             android:src="@drawable/ic_logout"
@@ -58,14 +61,13 @@
             android:id="@+id/bannerCard"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_marginTop="20dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
+            android:layout_marginTop="24dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="6dp"
             app:layout_constraintDimensionRatio="16:9"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvBienvenida"
-            app:layout_constraintWidth_percent="1.0">
+            app:layout_constraintTop_toBottomOf="@+id/tvBienvenida">
 
             <ImageView
                 android:id="@+id/bydBanner"
@@ -81,9 +83,9 @@
             android:id="@+id/inventarioStatsCard"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="2dp"
+            android:layout_marginTop="24dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="4dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/bannerCard">
@@ -92,7 +94,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:padding="16dp">
+                android:padding="20dp">
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -106,22 +108,22 @@
                         android:layout_height="wrap_content"
                         android:text="Inventario actual"
                         android:textColor="#777777"
-                        android:textSize="14sp" />
+                        android:textSize="16sp" />
 
                     <TextView
                         android:id="@+id/tvTotalAutos"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
+                        android:layout_marginTop="6dp"
                         android:text="24 vehículos"
                         android:textColor="#0052A5"
-                        android:textSize="24sp"
+                        android:textSize="28sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
                 <ImageView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
                     android:contentDescription="Ícono de Inventario"
                     android:src="@drawable/ic_inventory"
                     app:tint="#0052A5" />
@@ -133,10 +135,11 @@
             android:id="@+id/tvAccionesRapidas"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="28dp"
             android:text="Acciones rápidas"
-            android:textColor="#777777"
-            android:textSize="16sp"
+            android:textColor="#555555"
+            android:textSize="18sp"
+            android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/inventarioStatsCard" />
 
@@ -145,7 +148,7 @@
             android:id="@+id/gridAccionesRapidas"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="16dp"
             app:columnCount="2"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -153,13 +156,14 @@
             app:layout_constraintTop_toBottomOf="@+id/tvAccionesRapidas"
             app:rowCount="2">
 
+            <!-- Card Agregar Auto -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardAgregarAuto"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:layout_margin="6dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
+                android:layout_margin="8dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp"
                 app:layout_columnWeight="1"
                 app:layout_rowWeight="1">
 
@@ -171,8 +175,9 @@
                     android:padding="12dp">
 
                     <ImageView
-                        android:layout_width="44dp"
-                        android:layout_height="44dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_marginBottom="8dp"
                         android:contentDescription="Agregar Auto"
                         android:src="@drawable/ic_add_car"
                         app:tint="#0052A5" />
@@ -180,30 +185,31 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
                         android:text="Agregar Auto"
                         android:textColor="#333333"
-                        android:textSize="14sp"
+                        android:textSize="16sp"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
+                        android:layout_marginTop="4dp"
                         android:gravity="center"
+                        android:maxLines="2"
                         android:text="Registra un nuevo vehículo"
                         android:textColor="#777777"
-                        android:textSize="12sp" />
+                        android:textSize="14sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
+            <!-- Card Inventario -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardInventario"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:layout_margin="6dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
+                android:layout_margin="8dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp"
                 app:layout_columnWeight="1"
                 app:layout_rowWeight="1">
 
@@ -215,8 +221,9 @@
                     android:padding="12dp">
 
                     <ImageView
-                        android:layout_width="44dp"
-                        android:layout_height="44dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_marginBottom="8dp"
                         android:contentDescription="Inventario"
                         android:src="@drawable/ic_inventory"
                         app:tint="#0052A5" />
@@ -224,30 +231,31 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
                         android:text="Inventario"
                         android:textColor="#333333"
-                        android:textSize="14sp"
+                        android:textSize="16sp"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
+                        android:layout_marginTop="4dp"
                         android:gravity="center"
+                        android:maxLines="2"
                         android:text="Ver todos los vehículos"
                         android:textColor="#777777"
-                        android:textSize="12sp" />
+                        android:textSize="14sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
+            <!-- Card Catálogo -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardCatalogo"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:layout_margin="6dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
+                android:layout_margin="8dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp"
                 app:layout_columnWeight="1"
                 app:layout_rowWeight="1">
 
@@ -259,8 +267,9 @@
                     android:padding="12dp">
 
                     <ImageView
-                        android:layout_width="44dp"
-                        android:layout_height="44dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_marginBottom="8dp"
                         android:contentDescription="Catálogo"
                         android:src="@drawable/ic_catalog"
                         app:tint="#0052A5" />
@@ -268,74 +277,31 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
                         android:text="Catálogo"
                         android:textColor="#333333"
-                        android:textSize="14sp"
+                        android:textSize="16sp"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
+                        android:layout_marginTop="4dp"
                         android:gravity="center"
+                        android:maxLines="2"
                         android:text="Explora los modelos"
                         android:textColor="#777777"
-                        android:textSize="12sp" />
+                        android:textSize="14sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <androidx.cardview.widget.CardView
-                android:id="@+id/cardDetalle"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_margin="6dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                app:layout_columnWeight="1"
-                app:layout_rowWeight="1">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:padding="12dp">
-
-                    <ImageView
-                        android:layout_width="44dp"
-                        android:layout_height="44dp"
-                        android:contentDescription="Detalles"
-                        android:src="@drawable/ic_detail"
-                        app:tint="#0052A5" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="Detalles"
-                        android:textColor="#333333"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:gravity="center"
-                        android:text="Información detallada"
-                        android:textColor="#777777"
-                        android:textSize="12sp" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-            <!-- Nueva card para gestión de ventas -->
+            <!-- Card Ventas -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardVentas"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:layout_margin="6dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
+                android:layout_margin="8dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp"
                 app:layout_columnWeight="1"
                 app:layout_rowWeight="1">
 
@@ -347,8 +313,9 @@
                     android:padding="12dp">
 
                     <ImageView
-                        android:layout_width="44dp"
-                        android:layout_height="44dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_marginBottom="8dp"
                         android:contentDescription="Ventas"
                         android:src="@drawable/ic_sales"
                         app:tint="#0052A5" />
@@ -356,24 +323,24 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
                         android:text="Ventas"
                         android:textColor="#333333"
-                        android:textSize="14sp"
+                        android:textSize="16sp"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
+                        android:layout_marginTop="4dp"
                         android:gravity="center"
+                        android:maxLines="2"
                         android:text="Gestión de ventas"
                         android:textColor="#777777"
-                        android:textSize="12sp" />
+                        android:textSize="14sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
-        </androidx.gridlayout.widget.GridLayout>
 
+        </androidx.gridlayout.widget.GridLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
