@@ -3,6 +3,7 @@ package com.example.catalogoautos.network
 import com.example.catalogoautos.model.VentaRequest
 import retrofit2.Response
 import retrofit2.http.*
+import java.time.LocalDateTime
 
 interface VentasApi {
     /**
@@ -47,4 +48,17 @@ interface VentasApi {
      */
     @GET("${ApiClient.VENTAS_ENDPOINT}/contar")
     suspend fun contarVentas(): Response<Map<String, Any>>
+
+    /**
+     * Obtener ventas por filtro de fecha y estatus
+     * @param fechaInicio Fecha de inicio en formato ISO (yyyy-MM-dd)
+     * @param fechaFin Fecha fin en formato ISO (yyyy-MM-dd)
+     * @param estatus Estatus opcional para filtrar (puede ser null)
+     */
+    @GET("${ApiClient.VENTAS_ENDPOINT}/filtro")
+    suspend fun obtenerVentasPorFiltro(
+        @Query("fechaInicio") fechaInicio: String,
+        @Query("fechaFin") fechaFin: String,
+        @Query("estatus") estatus: String?
+    ): Response<List<Map<String, Any>>>
 }

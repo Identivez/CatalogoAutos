@@ -12,10 +12,20 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONArray
+import org.json.JSONObject
 import java.math.BigDecimal
+import java.text.SimpleDateFormat
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 import kotlin.coroutines.CoroutineContext
+
 
 class VentasRepository(private val context: Context) : CoroutineScope {
 
@@ -23,6 +33,8 @@ class VentasRepository(private val context: Context) : CoroutineScope {
         get() = Dispatchers.Main
 
     private val TAG = "VentasRepository"
+    private val BASE_URL = "http://192.168.1.2:8080/AE_BYD/api"
+    private val client = OkHttpClient()
 
     // Constantes para los estados de venta
     companion object {
@@ -360,5 +372,110 @@ class VentasRepository(private val context: Context) : CoroutineScope {
         }
 
         return "Error al procesar la solicitud. Por favor, inténtalo de nuevo."
+    }
+
+    // Interfaz para el callback de ventas
+    interface VentasCallback {
+        fun onVentasRecibidas(ventas: List<Venta>)
+        fun onError(mensaje: String)
+    }
+
+    // Método para obtener ventas por filtro con coroutines
+    fun getVentasPorFiltro(
+        fechaInicio: LocalDateTime,
+        fechaFin: LocalDateTime,
+        estatus: String?,
+        callback: VentasCallback
+    ) {
+        launch {
+            try {
+                val dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                val fechaInicioStr = fechaInicio.format(dateFormat)
+                val fechaFinStr = fechaFin.format(dateFormat)
+
+                var url = "$BASE_URL/ventas/filtro?fechaInicio=$fechaInicioStr&fechaFin=$fechaFinStr"
+
+                if (!estatus.isNullOrEmpty() && estatus.lowercase() != "todos") {
+                    url += "&estatus=$estatus"
+                }
+
+                val request = Request.Builder()
+                    .url(url)
+                    .get()
+                    .build()
+
+                val response = withContext(Dispatchers.IO) {
+                    client.newCall(request).execute()
+                }
+
+                if (response.isSuccessful) {
+                    val responseBody = response.body?.string()
+                    val ventas = parsearRespuesta(responseBody)
+                    callback.onVentasRecibidas(ventas)
+                } else {
+                    callback.onError("Error al obtener ventas: ${response.code}")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error en la solicitud", e)
+                callback.onError("Error en la comunicación: ${e.message}")
+            }
+        }
+    }
+
+    // Método para parsear la respuesta JSON a lista de ventas
+    private fun parsearRespuesta(jsonResponse: String?): List<Venta> {
+        if (jsonResponse.isNullOrEmpty()) return emptyList()
+
+        val ventas = mutableListOf<Venta>()
+        try {
+            val jsonArray = JSONArray(jsonResponse)
+            for (i in 0 until jsonArray.length()) {
+                val jsonObject = jsonArray.getJSONObject(i)
+
+                val ventaId = jsonObject.getInt("ventaId")
+                val nSerie = jsonObject.getString("nSerie")
+                val cantidad = jsonObject.getInt("cantidad")
+                val precio = BigDecimal(jsonObject.getString("precio"))
+                val estatus = jsonObject.getString("estatus")
+
+                // Parsear fecha usando exclusivamente SimpleDateFormat
+                val fechaStr = jsonObject.getString("fechaVenta")
+                val fecha = try {
+                    // Usamos SimpleDateFormat que es más flexible con los formatos
+                    val sdf = SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.US)
+                    val date = sdf.parse(fechaStr)
+
+                    // Convertir a LocalDateTime para mantener compatibilidad con tu modelo de datos
+                    val instant = date.toInstant()
+                    LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error con SimpleDateFormat, intentando formatos alternativos para: $fechaStr", e)
+
+                    // Intentar con formatos alternativos si el principal falla
+                    try {
+                        if (fechaStr.contains("T")) {
+                            // Formato ISO
+                            LocalDateTime.parse(fechaStr, DateTimeFormatter.ISO_DATE_TIME)
+                        } else if (fechaStr.contains("-") && !fechaStr.contains(":")) {
+                            // Formato simple yyyy-MM-dd
+                            LocalDate.parse(fechaStr).atStartOfDay()
+                        } else {
+                            // Si nada funciona, usar hora actual
+                            Log.e(TAG, "No se pudo parsear la fecha: $fechaStr, usando fecha actual", e)
+                            LocalDateTime.now()
+                        }
+                    } catch (innerE: Exception) {
+                        Log.e(TAG, "Fallo definitivo al parsear fecha: $fechaStr", innerE)
+                        LocalDateTime.now()
+                    }
+                }
+
+                val venta = Venta(ventaId, nSerie, cantidad, precio, estatus, fecha)
+                ventas.add(venta)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al parsear respuesta JSON", e)
+        }
+        return ventas
     }
 }

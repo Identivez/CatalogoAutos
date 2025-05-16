@@ -4,11 +4,21 @@
 
     <!-- Permisos para acceso a archivos -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
     <!-- Para Android 13+ -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_DOCUMENTS" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Para Android 9 (API nivel 28) y versiones anteriores -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
 
+    <!-- Para Android 10+ (API nivel 29+) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_DOCUMENTS" />
     <application
         android:networkSecurityConfig="@xml/network_security_config"
         android:usesCleartextTraffic="true"
@@ -71,6 +81,7 @@
             android:exported="false"
             android:theme="@style/Theme.CatalogoAutos"
             android:parentActivityName=".view.MenuActivity" />
+
         <!-- Actividades para el servicio de ventas -->
         <activity
             android:name=".view.VentasActivity"
@@ -87,12 +98,30 @@
             android:exported="false"
             android:parentActivityName=".view.VentasActivity" />
 
+        <!-- Actividad para reportes de ventas -->
+        <activity
+            android:name=".view.ReportesActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MaterialComponents.Light.DarkActionBar"
+            android:parentActivityName=".view.VentasActivity" />
+
         <!-- Actividad principal original (puedes eliminarla si no la usarás) -->
         <activity
             android:name=".MainActivity"
             android:exported="false"
             android:theme="@style/Theme.CatalogoAutos">
         </activity>
+
+        <!-- FileProvider para compartir PDFs -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

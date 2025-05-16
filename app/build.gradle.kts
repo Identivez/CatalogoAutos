@@ -97,9 +97,11 @@ dependencies {
     implementation ("com.itextpdf:itext7-core:7.2.4")
 
     // Para solicitar permisos en tiempo de ejecución
-    implementation ("androidx.activity:activity-result:1.6.1")
+    implementation ("androidx.activity:activity:1.8.0")
 
     // Para guardar archivos
     implementation ("androidx.documentfile:documentfile:1.0.1")
+
+
 
 }

@@ -24,8 +24,7 @@ class MenuActivity : AppCompatActivity() {
     private lateinit var cardAgregarAuto: CardView
     private lateinit var cardInventario: CardView
     private lateinit var cardCatalogo: CardView
-    private lateinit var cardDetalle: CardView
-    // Declaramos la variable pero no la inicializamos todavía
+    // Declaramos las variables opcionales
     private var cardVentas: CardView? = null
 
     private lateinit var viewModel: MenuViewModel
@@ -84,7 +83,6 @@ class MenuActivity : AppCompatActivity() {
             cardAgregarAuto = findViewById(R.id.cardAgregarAuto)
             cardInventario = findViewById(R.id.cardInventario)
             cardCatalogo = findViewById(R.id.cardCatalogo)
-
 
             // Intentamos inicializar la card de ventas, pero no fallamos si no existe
             try {
@@ -181,16 +179,9 @@ class MenuActivity : AppCompatActivity() {
                 }
             }
 
-
             // Configurar listener para la card de ventas si existe
             cardVentas?.setOnClickListener {
-                try {
-                    Log.d(TAG, "Iniciando VentasActivity")
-                    startActivity(Intent(this, VentasActivity::class.java))
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error al iniciar VentasActivity: ${e.message}", e)
-                    Toast.makeText(this, "Error al abrir gestión de ventas: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
+                showVentasOptions()
             }
 
             // Listener para el botón de logout
@@ -216,6 +207,54 @@ class MenuActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e(TAG, "Error al configurar click listeners: ${e.message}", e)
             throw e  // Relanzamos la excepción para manejarla en onCreate
+        }
+    }
+
+    /**
+     * Muestra un diálogo con opciones para ir a la pantalla de ventas o de reportes
+     */
+    private fun showVentasOptions() {
+        try {
+            val options = arrayOf("Gestión de ventas", "Reportes de ventas")
+
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Seleccione una opción")
+                .setItems(options) { dialog, which ->
+                    when (which) {
+                        0 -> {
+                            // Opción de gestión de ventas
+                            try {
+                                Log.d(TAG, "Iniciando VentasActivity")
+                                startActivity(Intent(this, VentasActivity::class.java))
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error al iniciar VentasActivity: ${e.message}", e)
+                                Toast.makeText(this, "Error al abrir gestión de ventas: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                        1 -> {
+                            // Opción de reportes
+                            try {
+                                Log.d(TAG, "Iniciando ReportesActivity")
+                                startActivity(Intent(this, ReportesActivity::class.java))
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error al iniciar ReportesActivity: ${e.message}", e)
+                                Toast.makeText(this, "Error al abrir reportes: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                }
+                .setNegativeButton("Cancelar") { dialog, _ -> dialog.dismiss() }
+                .show()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al mostrar opciones de ventas: ${e.message}", e)
+
+            // En caso de error, intentamos ir directamente a VentasActivity como fallback
+            try {
+                startActivity(Intent(this, VentasActivity::class.java))
+            } catch (ex: Exception) {
+                Log.e(TAG, "Error al iniciar VentasActivity como fallback: ${ex.message}", ex)
+                Toast.makeText(this, "Error al acceder a las funciones de ventas", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
