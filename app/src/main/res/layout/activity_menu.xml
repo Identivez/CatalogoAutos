@@ -19,22 +19,11 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <!-- Sección superior con perfil y título -->
-        <ImageView
-            android:id="@+id/profileImage"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:contentDescription="Perfil"
-            android:src="@drawable/ic_profile"
-            app:layout_constraintBottom_toBottomOf="@+id/tvBienvenida"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/tvBienvenida" />
-
+        <!-- Sección superior con título (sin icono de perfil) -->
         <TextView
             android:id="@+id/tvBienvenida"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
             android:text="Bienvenido a BYD"
             android:textAlignment="center"
@@ -42,7 +31,7 @@
             android:textSize="24sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toStartOf="@+id/btnLogout"
-            app:layout_constraintStart_toEndOf="@+id/profileImage"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <ImageButton
