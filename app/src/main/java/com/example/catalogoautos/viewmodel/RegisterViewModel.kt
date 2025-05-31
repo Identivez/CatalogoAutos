@@ -25,7 +25,7 @@ class RegisterViewModel : ViewModel() {
     private val TAG = "RegisterViewModel"
 
     fun register() {
-        // Validar campos
+
         if (nombre.value.isNullOrEmpty() ||
             apellido.value.isNullOrEmpty() ||
             email.value.isNullOrEmpty() ||
@@ -33,14 +33,12 @@ class RegisterViewModel : ViewModel() {
             _result.value = Result.failure(Exception("Todos los campos son obligatorios"))
             return
         }
-
-        // Validar email
         if (!email.value!!.endsWith("@admin.com") && !email.value!!.endsWith("@tec.com")) {
             _result.value = Result.failure(Exception("El correo debe terminar con @admin.com o @tec.com"))
             return
         }
 
-        // Validar password
+
         if (password.value!!.length < 8) {
             _result.value = Result.failure(Exception("La contraseña debe tener al menos 8 caracteres"))
             return
@@ -48,7 +46,7 @@ class RegisterViewModel : ViewModel() {
 
         _isLoading.value = true
 
-        // Crear un mapa con los datos del usuario
+
         val usuarioMap = mapOf(
             "nombre" to nombre.value!!,
             "apellido" to apellido.value!!,
@@ -56,10 +54,10 @@ class RegisterViewModel : ViewModel() {
             "password" to password.value!!
         )
 
-        // Usar coroutines para la llamada a la API
+
         viewModelScope.launch {
             try {
-                // Usar NetworkUtils para la petición
+
                 val resultado = NetworkUtils.post(ApiClient.USER_ENDPOINT, usuarioMap)
 
                 resultado.fold(

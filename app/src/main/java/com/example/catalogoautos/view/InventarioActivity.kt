@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 
 class InventarioActivity : AppCompatActivity(), AutoAdapter.OnAutoClickListener {
 
-    // Referencias a las vistas
+
     private lateinit var etBuscar: EditText
     private lateinit var chipGroupFiltros: ChipGroup
     private lateinit var rvAutos: RecyclerView
@@ -38,16 +38,16 @@ class InventarioActivity : AppCompatActivity(), AutoAdapter.OnAutoClickListener 
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var fabAgregar: FloatingActionButton
 
-    // ViewModel y Adapter
+
     private lateinit var viewModel: InventarioViewModel
     private lateinit var adapter: AutoAdapter
 
-    // Launcher para agregar/editar autos
+
     private val agregarEditarLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            // Recargar datos cuando regresamos de agregar/editar
+
             viewModel.cargarAutos()
         }
     }
@@ -56,28 +56,27 @@ class InventarioActivity : AppCompatActivity(), AutoAdapter.OnAutoClickListener 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_inventario)
 
-        // Configurar título
+
         supportActionBar?.title = "Inventario de Autos BYD"
 
-        // Inicializar ViewModel
+
         viewModel = ViewModelProvider(
             this,
             InventarioViewModel.Factory(AutoRepository.getInstance(applicationContext))
         ).get(InventarioViewModel::class.java)
 
-        // Inicializar vistas
+
         setupViews()
 
-        // Configurar RecyclerView
         setupRecyclerView()
 
-        // Configurar listeners
+
         setupListeners()
 
-        // Observar cambios en el ViewModel
+
         observeViewModel()
 
-        // Cargar datos
+
         viewModel.cargarAutos()
     }
 
@@ -89,10 +88,10 @@ class InventarioActivity : AppCompatActivity(), AutoAdapter.OnAutoClickListener 
         tvContador = findViewById(R.id.tvContador)
         progressBar = findViewById(R.id.progressBar)
 
-        // SwipeRefreshLayout para recargar datos al deslizar
+
         swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout)
 
-        // FloatingActionButton para agregar
+
         fabAgregar = findViewById(R.id.fabAgregar)
     }
 
@@ -103,7 +102,7 @@ class InventarioActivity : AppCompatActivity(), AutoAdapter.OnAutoClickListener 
     }
 
     private fun setupListeners() {
-        // Buscar al escribir
+
         etBuscar.addTextChangedListener(object : android.text.TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
@@ -112,7 +111,6 @@ class InventarioActivity : AppCompatActivity(), AutoAdapter.OnAutoClickListener 
             }
         })
 
-        // Chips de filtro
         findViewById<Chip>(R.id.chipModelo).setOnClickListener {
             viewModel.setTipoBusqueda(InventarioViewModel.TipoBusqueda.MODELO)
         }
@@ -130,12 +128,11 @@ class InventarioActivity : AppCompatActivity(), AutoAdapter.OnAutoClickListener 
             viewModel.setSoloDisponibles(isChecked)
         }
 
-        // SwipeRefreshLayout
+
         swipeRefreshLayout.setOnRefreshListener {
             viewModel.cargarAutos()
         }
 
-        // FloatingActionButton
         fabAgregar.setOnClickListener {
             val intent = Intent(this, AgregarAutoActivity::class.java)
             agregarEditarLauncher.launch(intent)
@@ -143,7 +140,7 @@ class InventarioActivity : AppCompatActivity(), AutoAdapter.OnAutoClickListener 
     }
 
     private fun observeViewModel() {
-        // Observar lista de autos
+
         lifecycleScope.launch {
             viewModel.autos.collectLatest { autos ->
                 adapter.submitList(autos)
@@ -152,7 +149,7 @@ class InventarioActivity : AppCompatActivity(), AutoAdapter.OnAutoClickListener 
             }
         }
 
-        // Observar estado de carga
+
         lifecycleScope.launch {
             viewModel.isLoading.collectLatest { isLoading ->
                 progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
@@ -160,7 +157,7 @@ class InventarioActivity : AppCompatActivity(), AutoAdapter.OnAutoClickListener 
             }
         }
 
-        // Observar errores
+
         lifecycleScope.launch {
             viewModel.error.collectLatest { error ->
                 error?.let {
@@ -169,7 +166,7 @@ class InventarioActivity : AppCompatActivity(), AutoAdapter.OnAutoClickListener 
             }
         }
 
-        // Observar estadísticas
+
         lifecycleScope.launch {
             viewModel.estadisticasInventario.collectLatest { stats ->
                 val totalAutos = stats["totalAutos"] ?: 0
@@ -193,7 +190,7 @@ class InventarioActivity : AppCompatActivity(), AutoAdapter.OnAutoClickListener 
         }
     }
 
-    // Implementación de callbacks de AutoAdapter.OnAutoClickListener
+
     override fun onAutoClick(auto: Auto) {
         val intent = Intent(this, DetalleAutoActivity::class.java)
         intent.putExtra("auto_id", auto.auto_id)

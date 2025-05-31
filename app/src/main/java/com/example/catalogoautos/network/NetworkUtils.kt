@@ -25,7 +25,7 @@ object NetworkUtils {
                 .get()
                 .build()
 
-            // Realizar la petición en un hilo de fondo
+
             val response = ApiClient.httpClient.newCall(request).execute()
 
             if (response.isSuccessful) {
@@ -58,7 +58,7 @@ object NetworkUtils {
                 .post(requestBody)
                 .build()
 
-            // Realizar la petición en un hilo de fondo
+
             val response = ApiClient.httpClient.newCall(request).execute()
 
             if (response.isSuccessful) {
@@ -101,7 +101,7 @@ object NetworkUtils {
                 .put(requestBody)
                 .build()
 
-            // Realizar la petición en un hilo de fondo
+
             val response = ApiClient.httpClient.newCall(request).execute()
 
             if (response.isSuccessful) {
@@ -141,7 +141,7 @@ object NetworkUtils {
                 .delete()
                 .build()
 
-            // Realizar la petición en un hilo de fondo
+
             val response = ApiClient.httpClient.newCall(request).execute()
 
             if (response.isSuccessful) {

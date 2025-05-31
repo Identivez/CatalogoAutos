@@ -36,11 +36,10 @@ class LoginActivity : AppCompatActivity() {
             supportActionBar?.hide()
             setContentView(R.layout.activity_login)
 
-            // Inicializar ViewModel con Factory
+
             viewModel = ViewModelProvider(this, LoginViewModel.Factory(application))
                 .get(LoginViewModel::class.java)
 
-            // Configurar referencias a vistas
             etUsername = findViewById(R.id.etUsername)
             etPassword = findViewById(R.id.etPassword)
             btnLogin = findViewById(R.id.btnLogin)
@@ -48,7 +47,7 @@ class LoginActivity : AppCompatActivity() {
             ibTogglePassword = findViewById(R.id.ibTogglePassword)
             btnGoToRegister = findViewById(R.id.btnGoToRegister)
 
-            // Configurar el botón de toggle para la contraseña
+
             ibTogglePassword.setOnClickListener {
                 try {
                     togglePasswordVisibility()
@@ -57,7 +56,7 @@ class LoginActivity : AppCompatActivity() {
                 }
             }
 
-            // Configurar click listener para el botón de login
+
             btnLogin.setOnClickListener {
                 try {
                     attemptLogin()
@@ -67,7 +66,7 @@ class LoginActivity : AppCompatActivity() {
                 }
             }
 
-            // Configurar el botón para ir al registro
+
             btnGoToRegister.setOnClickListener {
                 try {
                     Log.d(TAG, "Iniciando RegisterActivity")
@@ -79,7 +78,7 @@ class LoginActivity : AppCompatActivity() {
                 }
             }
 
-            // Observar el resultado del login
+
             viewModel.loginResult.observe(this) { result ->
                 try {
                     result.fold(
@@ -88,20 +87,20 @@ class LoginActivity : AppCompatActivity() {
                             hideError()
 
                             try {
-                                // Crear un Intent explícito para la actividad del menú
+
                                 val intent = Intent(this@LoginActivity, MenuActivity::class.java)
 
-                                // Usar flags menos agresivos para evitar problemas
+
                                 intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
 
                                 Log.d(TAG, "Iniciando MenuActivity desde LoginActivity")
 
-                                // Iniciar la actividad
+
                                 startActivity(intent)
 
                                 Log.d(TAG, "Después de startActivity para MenuActivity")
 
-                                // Cerrar esta actividad después de iniciar la otra
+
                                 finish()
                             } catch (e: Exception) {
                                 Log.e(TAG, "Error al iniciar MenuActivity: ${e.message}", e)
@@ -112,7 +111,7 @@ class LoginActivity : AppCompatActivity() {
                             Log.e(TAG, "Error de login: ${error.message}")
                             showError("Error: ${error.message}")
 
-                            // Mostrar un Toast con información del error
+
                             Toast.makeText(
                                 this,
                                 "Error de conexión. Verifica tus credenciales o la conexión al servidor.",
@@ -126,7 +125,7 @@ class LoginActivity : AppCompatActivity() {
                 }
             }
 
-            // Observar el estado de carga
+
             viewModel.isLoading.observe(this) { isLoading ->
                 try {
                     if (isLoading) {
@@ -171,15 +170,15 @@ class LoginActivity : AppCompatActivity() {
 
     private fun togglePasswordVisibility() {
         if (etPassword.transformationMethod is PasswordTransformationMethod) {
-            // Mostrar contraseña
+
             etPassword.transformationMethod = HideReturnsTransformationMethod.getInstance()
             ibTogglePassword.setImageResource(R.drawable.ic_visibility)
         } else {
-            // Ocultar contraseña
+
             etPassword.transformationMethod = PasswordTransformationMethod.getInstance()
             ibTogglePassword.setImageResource(R.drawable.ic_visibility_off)
         }
-        // Mantener el cursor al final del texto
+
         etPassword.setSelection(etPassword.text.length)
     }
 
@@ -192,16 +191,16 @@ class LoginActivity : AppCompatActivity() {
             return
         }
 
-        // Ocultar mensajes de error anteriores
+
         hideError()
 
         Log.d(TAG, "Intentando login con email: $username")
 
-        // Establecemos los valores del ViewModel
+
         viewModel.email.value = username
         viewModel.password.value = password
 
-        // Llamamos al login
+
         viewModel.login()
     }
 

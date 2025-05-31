@@ -21,11 +21,10 @@ class RegisterActivity : AppCompatActivity() {
         Log.d(TAG, "RegisterActivity onCreate")
 
         try {
-            // Inicializa el binding
+
             binding = ActivityRegisterBinding.inflate(layoutInflater)
             setContentView(binding.root)
 
-            // Configura el botón de registro
             binding.btnRegister.setOnClickListener {
                 try {
                     validarYRegistrar()
@@ -35,39 +34,38 @@ class RegisterActivity : AppCompatActivity() {
                 }
             }
 
-            // Observamos el estado de carga
+
             vm.isLoading.observe(this) { isLoading ->
                 try {
-                    // Mostrar/ocultar indicador de carga
                     binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
-                    // Habilitar/deshabilitar botón de registro
+
                     binding.btnRegister.isEnabled = !isLoading
                 } catch (e: Exception) {
                     Log.e(TAG, "Error al manejar estado de carga: ${e.message}", e)
                 }
             }
 
-            // Observamos el resultado del registro
+
             vm.result.observe(this) { result ->
                 try {
                     result.onSuccess {
                         Log.d(TAG, "Registro exitoso")
-                        // En caso de éxito, mostramos mensaje
+
                         Toast.makeText(this, "¡Registro exitoso!", Toast.LENGTH_LONG).show()
 
                         try {
-                            // Navegar a LoginActivity de forma controlada
+
                             val intent = Intent(this, LoginActivity::class.java)
                             startActivity(intent)
-                            finish()  // Cerrar esta actividad
+                            finish()
                         } catch (e: Exception) {
                             Log.e(TAG, "Error al navegar después del registro exitoso: ${e.message}", e)
-                            // En caso de error en la navegación, al menos intentamos cerrar esta actividad
+
                             finish()
                         }
                     }.onFailure { error ->
                         Log.e(TAG, "Error en el registro: ${error.message}", error)
-                        // En caso de error, mostramos mensaje de error
+
                         Toast.makeText(this, "Error: ${error.message}", Toast.LENGTH_LONG).show()
                     }
                 } catch (e: Exception) {
@@ -78,7 +76,7 @@ class RegisterActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e(TAG, "Error en onCreate: ${e.message}", e)
             Toast.makeText(this, "Error al iniciar la pantalla: ${e.message}", Toast.LENGTH_LONG).show()
-            finish() // Si hay un error grave, cerramos la actividad
+            finish()
         }
     }
 
@@ -88,7 +86,7 @@ class RegisterActivity : AppCompatActivity() {
         val email = binding.etEmail.text.toString()
         val password = binding.etPassword.text.toString()
 
-        // Validaciones básicas
+
         if (nombre.isEmpty()) {
             binding.etNombre.error = "El nombre es obligatorio"
             return
@@ -110,16 +108,16 @@ class RegisterActivity : AppCompatActivity() {
             return
         }
 
-        // Log para debugging
+
         Log.d(TAG, "Datos validados correctamente. Procediendo con el registro")
 
-        // Asignamos los valores al ViewModel
+
         vm.nombre.value = nombre
         vm.apellido.value = apellido
         vm.email.value = email
         vm.password.value = password
 
-        // Llamamos a la función para registrar al usuario
+
         vm.register()
     }
 

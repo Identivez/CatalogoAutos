@@ -20,36 +20,36 @@ import java.util.concurrent.TimeUnit
 
 class InventarioViewModel(private val repository: AutoRepository) : ViewModel() {
 
-    // Enumeración para definir el tipo de búsqueda
+
     enum class TipoBusqueda {
         MODELO, NUMERO_SERIE, SKU, TODOS
     }
 
-    // Lista de autos
+
     private val _autos = MutableStateFlow<List<Auto>>(emptyList())
     val autos: StateFlow<List<Auto>> = _autos.asStateFlow()
 
-    // Término de búsqueda
+
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-    // Tipo de búsqueda actual
+
     private val _tipoBusqueda = MutableStateFlow(TipoBusqueda.TODOS)
     val tipoBusqueda: StateFlow<TipoBusqueda> = _tipoBusqueda.asStateFlow()
 
-    // Solo mostrar disponibles
+
     private val _soloDisponibles = MutableStateFlow(false)
     val soloDisponibles: StateFlow<Boolean> = _soloDisponibles.asStateFlow()
 
-    // Estado de carga
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    // Estado de error
+
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
-    // Estadísticas del inventario
+
     private val _estadisticasInventario = MutableStateFlow(mapOf(
         "totalAutos" to 0,
         "autosDisponibles" to 0,
@@ -57,24 +57,24 @@ class InventarioViewModel(private val repository: AutoRepository) : ViewModel() 
     ))
     val estadisticasInventario: StateFlow<Map<String, Int>> = _estadisticasInventario.asStateFlow()
 
-    // Cliente HTTP para comunicación con el servidor
+
     private val client = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(15, TimeUnit.SECONDS)
         .build()
 
-    // URL base del servidor (con posibilidad de ser actualizada)
+
     private var serverUrl = "http://192.168.1.18:8080/ae_byd/api/auto"
 
     init {
-        // Cargar autos al iniciar
+
         cargarAutos()
     }
 
-    // Verificar cuál URL del servidor funciona
+
     private fun verificarConexionServidor() {
         viewModelScope.launch {
-            // Lista de posibles URLs a probar
+
             val urlsParaProbar = listOf(
                 "http://192.168.1.18:8080/ae_byd/api/auto",
                 "http://192.168.1.18:8080/AE_BYD/api/auto",
@@ -115,14 +115,14 @@ class InventarioViewModel(private val repository: AutoRepository) : ViewModel() 
         }
     }
 
-    // Cargar autos
+
     fun cargarAutos() {
         _isLoading.value = true
         _error.value = null
 
         viewModelScope.launch {
             try {
-                // Primero intentamos cargar desde el servidor
+
                 Log.d("InventarioViewModel", "Intentando cargar autos desde el servidor...")
                 verificarConexionServidor()
 
@@ -162,22 +162,22 @@ class InventarioViewModel(private val repository: AutoRepository) : ViewModel() 
                         Log.d("InventarioViewModel", "Auto cargado: ${auto.modelo} - ${auto.sku}")
                     }
 
-                    // Actualizar el repositorio local con los datos del servidor
+
                     actualizarRepositorioLocal(autos)
 
-                    // Actualizar la lista de autos
+
                     _autos.value = autos
 
-                    // Actualizar estadísticas
+
                     actualizarEstadisticas(autos)
                 } else {
-                    // Error al cargar desde el servidor, intentar cargar desde local
+
                     Log.e("InventarioViewModel", "Error del servidor: ${response.code}")
                     cargarAutosLocales()
                 }
             } catch (e: Exception) {
                 Log.e("InventarioViewModel", "Error de conexión: ${e.message}")
-                // En caso de error, cargar desde local
+
                 cargarAutosLocales()
             } finally {
                 _isLoading.value = false
@@ -185,7 +185,7 @@ class InventarioViewModel(private val repository: AutoRepository) : ViewModel() 
         }
     }
 
-    // Cargar autos desde el repositorio local
+
     private fun cargarAutosLocales() {
         try {
             Log.d("InventarioViewModel", "Cargando autos desde repositorio local...")
@@ -207,17 +207,17 @@ class InventarioViewModel(private val repository: AutoRepository) : ViewModel() 
         }
     }
 
-    // Actualizar el repositorio local con los autos del servidor
+
     private fun actualizarRepositorioLocal(autos: List<Auto>) {
         autos.forEach { auto ->
             try {
-                // Intentar actualizar
+
                 val autoExistente = repository.obtenerAutoPorId(auto.auto_id)
                 if (autoExistente != null) {
                     repository.actualizarAuto(auto)
                     Log.d("InventarioViewModel", "Auto actualizado localmente: ${auto.modelo} - ${auto.sku}")
                 } else {
-                    // Si no existe, intentar agregar
+
                     repository.agregarAuto(auto)
                     Log.d("InventarioViewModel", "Auto agregado localmente: ${auto.modelo} - ${auto.sku}")
                 }
@@ -227,7 +227,7 @@ class InventarioViewModel(private val repository: AutoRepository) : ViewModel() 
         }
     }
 
-    // Actualizar estadísticas
+
     private fun actualizarEstadisticas(autos: List<Auto>) {
         val totalAutos = autos.size
         val autosDisponibles = autos.count { it.disponibilidad }
@@ -240,14 +240,14 @@ class InventarioViewModel(private val repository: AutoRepository) : ViewModel() 
         )
     }
 
-    // Parsear fecha desde string
+
     private fun parseFechaFromString(fechaStr: String): LocalDateTime {
         return try {
-            // Intentar varios formatos de fecha
+
             if (fechaStr.contains("T")) {
                 LocalDateTime.parse(fechaStr)
             } else {
-                // Intentar con formato de timestamp SQL
+
                 val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
                 LocalDateTime.parse(fechaStr, formatter)
             }
@@ -257,7 +257,7 @@ class InventarioViewModel(private val repository: AutoRepository) : ViewModel() 
         }
     }
 
-    // Métodos para filtrar
+
     fun setSearchQuery(query: String) {
         _searchQuery.value = query
         filtrarAutos()
@@ -273,7 +273,6 @@ class InventarioViewModel(private val repository: AutoRepository) : ViewModel() 
         filtrarAutos()
     }
 
-    // Filtrar autos según los criterios
     private fun filtrarAutos() {
         viewModelScope.launch {
             _isLoading.value = true
@@ -285,12 +284,12 @@ class InventarioViewModel(private val repository: AutoRepository) : ViewModel() 
                 val soloDisponibles = _soloDisponibles.value
 
                 val autosFiltrados = autosOriginales.filter { auto ->
-                    // Primero filtrar por disponibilidad si es necesario
+
                     val cumpleDisponibilidad = !soloDisponibles || auto.disponibilidad
 
-                    // Luego filtrar por el término de búsqueda según el tipo seleccionado
+
                     val cumpleBusqueda = if (query.isBlank()) {
-                        true // Si no hay query, cumple la búsqueda
+                        true
                     } else {
                         when (tipo) {
                             TipoBusqueda.MODELO -> auto.modelo.contains(query, ignoreCase = true)
@@ -319,7 +318,7 @@ class InventarioViewModel(private val repository: AutoRepository) : ViewModel() 
         }
     }
 
-    // Factory para crear el ViewModel
+
     class Factory(private val repository: AutoRepository) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {

@@ -105,7 +105,7 @@
             android:theme="@style/Theme.MaterialComponents.Light.DarkActionBar"
             android:parentActivityName=".view.VentasActivity" />
 
-        <!-- Actividad principal original (puedes eliminarla si no la usarás) -->
+
         <activity
             android:name=".MainActivity"
             android:exported="false"

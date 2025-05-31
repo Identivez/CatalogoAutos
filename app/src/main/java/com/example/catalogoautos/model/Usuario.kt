@@ -4,7 +4,7 @@ import org.json.JSONObject
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-// Clase Usuario utilizando parámetros directos y sin objetos adicionales
+
 data class Usuario(
     val usuarioId: Int,
     val nombre: String,
@@ -14,10 +14,10 @@ data class Usuario(
     val rol: String,
     val fechaRegistro: String
 ) {
-    // Función para convertir JSON a parámetros directos
+
     companion object {
         fun fromJson(json: String?): Usuario {
-            val jsonObject = JSONObject(json ?: "{}") // Si json es nulo, pasa un JSON vacío
+            val jsonObject = JSONObject(json ?: "{}")
             return Usuario(
                 usuarioId = jsonObject.optInt("usuario_id", 0),
                 nombre = jsonObject.optString("nombre", ""),
@@ -29,7 +29,7 @@ data class Usuario(
             )
         }
 
-        // Función para convertir parámetros directos a JSON
+
         fun toJson(usuarioId: Int, nombre: String, apellido: String, email: String, password: String, rol: String, fechaRegistro: String): String {
             val jsonObject = JSONObject()
             jsonObject.put("usuario_id", usuarioId)
@@ -43,13 +43,13 @@ data class Usuario(
         }
     }
 
-    // Función para convertir fechaRegistro a LocalDateTime, si es necesario
+
     fun getFechaRegistroAsLocalDateTime(): LocalDateTime? {
         return if (fechaRegistro.isNotEmpty()) {
             try {
                 LocalDateTime.parse(fechaRegistro, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
             } catch (e: Exception) {
-                // Si hay error en el formato, retornar null
+
                 null
             }
         } else {

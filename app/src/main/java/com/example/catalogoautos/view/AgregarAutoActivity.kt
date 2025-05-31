@@ -27,7 +27,7 @@ import java.time.LocalDateTime
 
 class AgregarAutoActivity : AppCompatActivity() {
 
-    // Declaración de los elementos de la interfaz
+
     private lateinit var etNumeroSerie: EditText
     private lateinit var etSku: EditText
     private lateinit var tvMarcaSeleccionada: TextView
@@ -47,7 +47,7 @@ class AgregarAutoActivity : AppCompatActivity() {
     private var selectedImageUri: Uri? = null
     private var autoId: Int? = null
 
-    // Constante para la marca BYD
+
     private val MARCA_BYD_ID = 1
     private val TAG = "AgregarAutoActivity"
 
@@ -78,20 +78,20 @@ class AgregarAutoActivity : AppCompatActivity() {
         supportActionBar?.hide()
         setContentView(R.layout.activity_agregar_auto)
 
-        // Configurar barra de acción
+
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "Agregar Auto"
 
-        // Inicializar ViewModel
+
         viewModel = ViewModelProvider(this, AgregarAutoViewModel.Factory(this))
             .get(AgregarAutoViewModel::class.java)
 
-        // Obtener el ID del auto a editar si existe
+
         autoId = intent.getIntExtra("AUTO_ID", -1)
         if (autoId == -1) autoId = null
         viewModel.setAutoParaEditar(autoId)
 
-        // Configurar referencias a vistas
+
         etNumeroSerie = findViewById(R.id.etNumeroSerie)
         etSku = findViewById(R.id.etSku)
         tvMarcaSeleccionada = findViewById(R.id.tvMarcaSeleccionada)
@@ -107,15 +107,15 @@ class AgregarAutoActivity : AppCompatActivity() {
         btnGuardar = findViewById(R.id.btnGuardar)
         progressBar = findViewById(R.id.progressBar)
 
-        // Establecer BYD como marca predeterminada
+
         tvMarcaSeleccionada.text = "BYD"
 
-        // Si estamos editando, llenar los campos con los datos existentes y cambiar el título
+
         val autoActual = viewModel.getAutoActual()
         if (autoId != null) {
             supportActionBar?.title = "Editar Auto"
 
-            // Llenar campos con los valores del auto a editar
+
             etNumeroSerie.setText(autoActual.n_serie)
             etSku.setText(autoActual.sku)
             etModelo.setText(autoActual.modelo)
@@ -127,9 +127,9 @@ class AgregarAutoActivity : AppCompatActivity() {
             cbDisponibilidad.isChecked = autoActual.disponibilidad
         }
 
-        // Configurar listeners de botones
+
         btnSeleccionarFoto.setOnClickListener {
-            // Usar directamente el enfoque moderno con GetContent
+
             selectImageLauncher.launch("image/*")
         }
 
@@ -137,18 +137,18 @@ class AgregarAutoActivity : AppCompatActivity() {
             guardarAuto()
         }
 
-        // Observadores
+
         setupObservers()
     }
 
     private fun setupObservers() {
-        // Observar estado de carga
+
         viewModel.isLoading.observe(this) { isLoading ->
             progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
             btnGuardar.isEnabled = !isLoading
         }
 
-        // Observar mensajes de error
+
         viewModel.errorMessage.observe(this) { errorMessage ->
             if (!errorMessage.isNullOrEmpty()) {
                 Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
@@ -156,7 +156,7 @@ class AgregarAutoActivity : AppCompatActivity() {
         }
     }
 
-    // Método para copiar la imagen seleccionada al almacenamiento interno de la aplicación
+
     private fun copiarImagenAAlmacenamientoInterno(uri: Uri): String? {
         try {
             val inputStream = contentResolver.openInputStream(uri) ?: return null
@@ -176,7 +176,7 @@ class AgregarAutoActivity : AppCompatActivity() {
 
     private fun guardarAuto() {
         try {
-            // Validar campos obligatorios
+
             val numeroSerie = etNumeroSerie.text.toString().trim()
             val sku = etSku.text.toString().trim()
             val modelo = etModelo.text.toString().trim()
@@ -185,7 +185,7 @@ class AgregarAutoActivity : AppCompatActivity() {
             val precioStr = etPrecio.text.toString().trim()
             val stockStr = etStock.text.toString().trim()
 
-            // Validación de campos obligatorios
+
             if (numeroSerie.isEmpty()) {
                 Toast.makeText(this, "Por favor, ingrese el número de serie", Toast.LENGTH_SHORT).show()
                 etNumeroSerie.requestFocus()
@@ -234,10 +234,9 @@ class AgregarAutoActivity : AppCompatActivity() {
                 return
             }
 
-            // Convertir tipos
             val anio = anioStr.toInt()
 
-            // Validar el año según la restricción de la base de datos
+
             val currentYear = LocalDateTime.now().year
             if (anio <= 1900 || anio > currentYear) {
                 Toast.makeText(this, "El año debe estar entre 1901 y $currentYear", Toast.LENGTH_SHORT).show()
@@ -247,7 +246,7 @@ class AgregarAutoActivity : AppCompatActivity() {
 
             val precio = precioStr.toDouble()
 
-            // Validar precio según la restricción de la base de datos
+
             if (precio < 0) {
                 Toast.makeText(this, "El precio no puede ser negativo", Toast.LENGTH_SHORT).show()
                 etPrecio.requestFocus()
@@ -256,7 +255,7 @@ class AgregarAutoActivity : AppCompatActivity() {
 
             val stock = stockStr.toInt()
 
-            // Validar stock según la restricción de la base de datos
+
             if (stock < 0) {
                 Toast.makeText(this, "El stock no puede ser negativo", Toast.LENGTH_SHORT).show()
                 etStock.requestFocus()
@@ -266,10 +265,10 @@ class AgregarAutoActivity : AppCompatActivity() {
             val descripcion = etDescripcion.text.toString().trim()
             val disponibilidad = cbDisponibilidad.isChecked
 
-            // Fecha actual para actualización
+
             val fechaActualizacion = LocalDateTime.now()
 
-            // Crear o actualizar el auto
+
             val auto = if (autoId == null) {
                 // Nuevo auto
                 Auto(
@@ -287,7 +286,7 @@ class AgregarAutoActivity : AppCompatActivity() {
                     fecha_actualizacion = fechaActualizacion
                 )
             } else {
-                // Auto existente
+
                 viewModel.getAutoActual().copy(
                     n_serie = numeroSerie,
                     sku = sku,
@@ -303,14 +302,13 @@ class AgregarAutoActivity : AppCompatActivity() {
                 )
             }
 
-            // Mostrar ProgressBar y deshabilitar botón
             progressBar.visibility = View.VISIBLE
             btnGuardar.isEnabled = false
 
-            // Guardar el auto remotamente
+
             lifecycleScope.launch {
                 try {
-                    // Intentar guardar en el servidor primero
+
                     val resultado = viewModel.guardarAutoRemoto(auto)
 
                     resultado.fold(
@@ -322,25 +320,24 @@ class AgregarAutoActivity : AppCompatActivity() {
                                 Toast.LENGTH_SHORT
                             ).show()
 
-                            // Volver a la pantalla anterior
+
                             setResult(RESULT_OK)
                             finish()
                         },
                         onFailure = { error ->
-                            // Se guardó localmente pero hubo error en el servidor
+
                             Toast.makeText(
                                 this@AgregarAutoActivity,
                                 "Auto guardado localmente pero hubo un error en el servidor: ${error.message}",
                                 Toast.LENGTH_LONG
                             ).show()
 
-                            // Volver a la pantalla anterior
                             setResult(RESULT_OK)
                             finish()
                         }
                     )
                 } catch (e: Exception) {
-                    // Error general
+
                     runOnUiThread {
                         progressBar.visibility = View.GONE
                         btnGuardar.isEnabled = true
@@ -357,7 +354,7 @@ class AgregarAutoActivity : AppCompatActivity() {
         }
     }
 
-    // Manejar clic en el botón de volver
+
     override fun onSupportNavigateUp(): Boolean {
         onBackPressedDispatcher.onBackPressed()
         return true

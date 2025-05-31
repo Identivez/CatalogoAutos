@@ -16,8 +16,7 @@ import com.example.catalogoautos.ui.theme.CatalogoAutosTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.setDecorFitsSystemWindows(false) // Habilitar Edge-to-Edge
-// Habilitar Edge-to-Edge
+        window.setDecorFitsSystemWindows(false)
         setContent {
             CatalogoAutosTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->

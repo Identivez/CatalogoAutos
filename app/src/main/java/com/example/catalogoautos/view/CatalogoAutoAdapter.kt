@@ -26,10 +26,10 @@ class CatalogoAutoAdapter(
     private val onAutoClick: (Auto) -> Unit
 ) : ListAdapter<Auto, CatalogoAutoAdapter.AutoViewHolder>(AutoDiffCallback()) {
 
-    // Constante para el nombre de la marca
+
     private val MARCA_BYD = "BYD"
 
-    // Formateador para fechas compatible con LocalDateTime
+
     private val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AutoViewHolder {
@@ -44,7 +44,7 @@ class CatalogoAutoAdapter(
     }
 
     class AutoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        // Referencias a vistas según el layout actual
+
         private val ivAutoFoto: ImageView = itemView.findViewById(R.id.ivAutoFoto)
         private val tvMarcaModelo: TextView = itemView.findViewById(R.id.tvMarcaModelo)
         private val tvAnoEstado: TextView = itemView.findViewById(R.id.tvAnoEstado)
@@ -55,25 +55,24 @@ class CatalogoAutoAdapter(
         private val tvFechaRegistro: TextView = itemView.findViewById(R.id.tvFechaRegistro)
 
         fun bind(auto: Auto, dateFormatter: DateTimeFormatter, onAutoClick: (Auto) -> Unit, marcaNombre: String) {
-            // Configurar información básica
+
             tvMarcaModelo.text = "$marcaNombre ${auto.modelo}"
 
-            // Mostrar año y estado de disponibilidad
+
             val estadoDisponibilidad = if (auto.disponibilidad) "Disponible" else "No disponible"
             tvAnoEstado.text = "${auto.anio} • $estadoDisponibilidad"
 
-            // Mostrar el color
+
             tvColor.text = "Color: ${auto.color}"
 
-            // Formatear precio como moneda
+
             val formatoPrecio = NumberFormat.getCurrencyInstance(Locale("es", "MX"))
             tvPrecio.text = formatoPrecio.format(auto.precio)
 
-            // Usar el campo stock para simular el kilometraje
-            // (ya que el layout tiene kilometraje pero el modelo tiene stock)
+
             tvKilometraje.text = "${formatoNumeroConSeparadores(auto.stock)} unid."
 
-            // Usar descripción para detalles técnicos
+
             tvDetallesTecnicos.text = if (auto.descripcion.isNotEmpty()) {
                 if (auto.descripcion.length > 20) {
                     auto.descripcion.substring(0, 20) + "..."
@@ -84,19 +83,18 @@ class CatalogoAutoAdapter(
                 "Sin detalles"
             }
 
-            // Formatear la fecha usando LocalDateTime
+
             tvFechaRegistro.text = auto.fecha_registro.format(dateFormatter)
 
-            // La imagen se manejará a través de la entidad Foto en una implementación completa
-            // Por ahora usamos un placeholder
+
             ivAutoFoto.setImageResource(R.drawable.ic_launcher_foreground)
 
-            // Configurar clic en todo el item para ver detalles
+
             itemView.setOnClickListener {
                 onAutoClick(auto)
             }
 
-            // Aplicar un estilo visual basado en la disponibilidad
+
             if (auto.disponibilidad) {
                 // Usamos colores estándar en lugar de recursos personalizados
                 tvAnoEstado.setTextColor(itemView.context.getResources().getColor(R.color.teal_700, itemView.context.theme))
@@ -105,7 +103,7 @@ class CatalogoAutoAdapter(
             }
         }
 
-        // Función para formatear números con separadores de miles
+
         private fun formatoNumeroConSeparadores(numero: Int): String {
             return NumberFormat.getNumberInstance(Locale.getDefault()).format(numero)
         }
@@ -117,7 +115,7 @@ class CatalogoAutoAdapter(
         }
 
         override fun areContentsTheSame(oldItem: Auto, newItem: Auto): Boolean {
-            // Comparación detallada incluyendo todos los campos relevantes
+
             return oldItem.auto_id == newItem.auto_id &&
                     oldItem.n_serie == newItem.n_serie &&
                     oldItem.sku == newItem.sku &&

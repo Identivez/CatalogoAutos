@@ -13,7 +13,7 @@ import java.time.LocalDateTime
 
 class AgregarAutoViewModel(private val repository: AutoRepository) : ViewModel() {
 
-    // LiveData para observar cambios en los campos del formulario
+
     private val _n_serie = MutableLiveData<String>("")
     val n_serie: LiveData<String> = _n_serie
 
@@ -41,20 +41,20 @@ class AgregarAutoViewModel(private val repository: AutoRepository) : ViewModel()
     private val _disponibilidad = MutableLiveData<Boolean>(true)
     val disponibilidad: LiveData<Boolean> = _disponibilidad
 
-    // Estado para validación
+
     private val _errorMessage = MutableLiveData<String?>(null)
     val errorMessage: LiveData<String?> = _errorMessage
 
-    // Estado de carga
+
     private val _isLoading = MutableLiveData<Boolean>(false)
     val isLoading: LiveData<Boolean> = _isLoading
 
-    // Auto que se está editando o un nuevo auto en caso de inserción
+
     private var autoActual: Auto = Auto(
         auto_id = 0,
         n_serie = "",
         sku = "",
-        marca_id = 1,  // BYD por defecto
+        marca_id = 1,
         modelo = "",
         anio = 0,
         color = "",
@@ -66,14 +66,14 @@ class AgregarAutoViewModel(private val repository: AutoRepository) : ViewModel()
         fecha_actualizacion = LocalDateTime.now()
     )
 
-    // Establece el auto que se está editando basado en su ID
+
     fun setAutoParaEditar(autoId: Int?) {
         if (autoId != null && autoId > 0) {
             val auto = repository.obtenerAutoPorId(autoId)
             if (auto != null) {
                 autoActual = auto
 
-                // Actualiza los LiveData con los valores del auto cargado
+
                 _n_serie.value = auto.n_serie
                 _sku.value = auto.sku
                 _modelo.value = auto.modelo
@@ -87,12 +87,12 @@ class AgregarAutoViewModel(private val repository: AutoRepository) : ViewModel()
         }
     }
 
-    // Retorna el auto que se está editando o el auto vacío en caso de inserción
+
     fun getAutoActual(): Auto {
         return autoActual
     }
 
-    // Actualiza los valores de los campos del formulario
+
     fun actualizarNSerie(n_serie: String) {
         _n_serie.value = n_serie
     }
@@ -129,7 +129,7 @@ class AgregarAutoViewModel(private val repository: AutoRepository) : ViewModel()
         _disponibilidad.value = disponibilidad
     }
 
-    // Validar que los campos obligatorios estén completos
+
     fun validarCampos(): Boolean {
         if (_n_serie.value.isNullOrBlank()) {
             _errorMessage.value = "El número de serie es obligatorio"
@@ -170,15 +170,15 @@ class AgregarAutoViewModel(private val repository: AutoRepository) : ViewModel()
         return true
     }
 
-    // Nuevo método para guardar auto remotamente
+
     suspend fun guardarAutoRemoto(auto: Auto): Result<Auto> {
         _isLoading.value = true
         try {
             return if (auto.auto_id == 0) {
-                // Es un nuevo auto, agregarlo al servidor
+
                 repository.agregarAutoRemoto(auto)
             } else {
-                // Es un auto existente, actualizar en el servidor
+
                 repository.actualizarAutoRemoto(auto)
             }
         } finally {
@@ -186,26 +186,25 @@ class AgregarAutoViewModel(private val repository: AutoRepository) : ViewModel()
         }
     }
 
-    // Guarda el auto en el repositorio (inserción o actualización)
+
     fun guardarAuto(auto: Auto) {
         _isLoading.value = true
         viewModelScope.launch {
             try {
-                // Intentar guardar en el servidor primero
+
                 val resultado = guardarAutoRemoto(auto)
                 resultado.fold(
                     onSuccess = {
                         _errorMessage.value = null
                     },
                     onFailure = { error ->
-                        // Si hay un error en el servidor, aún lo guardamos localmente
-                        // pero informamos del error
+
                         _errorMessage.value = "Error al guardar en el servidor: ${error.message}. " +
                                 "Los datos se han guardado localmente."
                     }
                 )
             } catch (e: Exception) {
-                // En caso de excepción, guardar localmente como último recurso
+
                 if (auto.auto_id == 0) {
                     // Es un nuevo auto
                     repository.agregarAuto(auto)
@@ -220,13 +219,11 @@ class AgregarAutoViewModel(private val repository: AutoRepository) : ViewModel()
         }
     }
 
-    // Método original guardarAuto sin parámetros, usa los valores de LiveData
+
     fun guardarAuto() {
         if (!validarCampos()) {
             return
         }
-
-        // Construir el auto con los valores actuales
         val autoAGuardar = Auto(
             auto_id = autoActual.auto_id,
             n_serie = _n_serie.value ?: "",
@@ -246,7 +243,7 @@ class AgregarAutoViewModel(private val repository: AutoRepository) : ViewModel()
         guardarAuto(autoAGuardar)
     }
 
-    // Factory para crear el ViewModel con el repositorio
+
     class Factory(private val context: Context) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {

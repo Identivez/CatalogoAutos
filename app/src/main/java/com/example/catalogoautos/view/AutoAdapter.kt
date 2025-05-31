@@ -20,7 +20,7 @@ class AutoAdapter(
     private val listener: OnAutoClickListener
 ) : ListAdapter<Auto, AutoAdapter.AutoViewHolder>(AutoDiffCallback()) {
 
-    // Constante para el nombre de la marca BYD
+
     private val MARCA_BYD = "BYD"
 
     interface OnAutoClickListener {
@@ -51,38 +51,37 @@ class AutoAdapter(
         private val ibEditar: ImageButton = itemView.findViewById(R.id.ibEditar)
 
         fun bind(auto: Auto, listener: OnAutoClickListener, marcaNombre: String) {
-            // Configurar información básica del auto
+
             tvMarcaModelo.text = "$marcaNombre ${auto.modelo}"
             tvSku.text = "SKU: ${auto.sku}"
             tvAnio.text = auto.anio.toString()
             tvColor.text = auto.color
 
-            // Formatear precio como moneda
+
             val formatoPrecio = NumberFormat.getCurrencyInstance(Locale("es", "MX"))
             tvPrecio.text = formatoPrecio.format(auto.precio)
 
-            // Configurar disponibilidad con estilo visual adecuado
+
             if (auto.disponibilidad) {
                 tvDisponibilidad.text = "Disponible"
                 tvDisponibilidad.setBackgroundResource(R.drawable.disponible_badge)
-                // Cambiamos la forma de acceder al color
+
                 tvDisponibilidad.setTextColor(itemView.context.getResources().getColor(R.color.green, itemView.context.theme))
             } else {
                 tvDisponibilidad.text = "No disponible"
-                // Cambiamos al drawable genérico, deberás crear este drawable
+
                 tvDisponibilidad.setBackgroundResource(R.drawable.badge_background)
-                // Cambiamos la forma de acceder al color
+
                 tvDisponibilidad.setTextColor(itemView.context.getResources().getColor(R.color.red, itemView.context.theme))
             }
 
-            // Mostrar información de stock
+
             tvStock.text = "Stock: ${auto.stock}"
 
-            // Para las fotos, usaremos una imagen predeterminada por ahora
-            // La implementación completa requeriría acceder a la entidad Foto relacionada
+
             ivAutoFoto.setImageResource(R.drawable.ic_launcher_foreground)
 
-            // Configurar listeners
+
             itemView.setOnClickListener {
                 listener.onAutoClick(auto)
             }
@@ -99,7 +98,7 @@ class AutoAdapter(
         }
 
         override fun areContentsTheSame(oldItem: Auto, newItem: Auto): Boolean {
-            // Comparación completa incluyendo los nuevos campos
+
             return oldItem.auto_id == newItem.auto_id &&
                     oldItem.n_serie == newItem.n_serie &&
                     oldItem.sku == newItem.sku &&

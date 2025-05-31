@@ -29,7 +29,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
 
-    // Instancia del repositorio para guardar datos del usuario
+
     private val usuarioRepository = UsuarioRepository(application.applicationContext)
 
     private val TAG = "LoginViewModel"
@@ -37,7 +37,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     fun login() {
         Log.d(TAG, "Iniciando proceso de login")
 
-        // Validar campos obligatorios
+
         if (email.value.isNullOrEmpty() || password.value.isNullOrEmpty()) {
             Log.d(TAG, "Campos obligatorios vacíos")
             _loginResult.postValue(Result.failure(Exception("Por favor, complete todos los campos")))
@@ -46,7 +46,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
         _isLoading.value = true
 
-        // Crear el JSON con los datos de login
+
         val loginData = mapOf(
             "email" to email.value!!,
             "password" to password.value!!
@@ -56,7 +56,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
         viewModelScope.launch {
             try {
-                // Usar NetworkUtils para la petición
+
                 val resultado = NetworkUtils.post(ApiClient.LOGIN_ENDPOINT, loginData)
 
                 resultado.fold(
@@ -70,12 +70,11 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                                 return@fold
                             }
 
-                            // Imprimir el JSON completo para debugging
                             Log.d(TAG, "JSON recibido: $responseBody")
 
                             val jsonResponse = JSONObject(responseBody)
 
-                            // Extraer datos del usuario - CORREGIDO: usando los nombres correctos de campos
+
                             val usuarioId = jsonResponse.optInt("usuario_id", 0)  // Cambiado de "usuarioId" a "usuario_id"
                             val nombre = jsonResponse.optString("nombre", "")
                             val apellido = jsonResponse.optString("apellido", "")
@@ -91,7 +90,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
                             Log.d(TAG, "Datos extraídos del JSON: ID=$usuarioId, Nombre=$nombre, Apellido=$apellido")
 
-                            // Guardar los datos del usuario en el repositorio
+
                             try {
                                 usuarioRepository.setUsuarioActual(
                                     usuarioId, nombre, apellido, email, rol, fechaRegistro
@@ -103,14 +102,13 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                                 return@fold
                             }
 
-                            // Notificar éxito
                             _loginResult.postValue(Result.success(Unit))
 
                         } catch (e: JSONException) {
-                            // Error específico de formato JSON
+
                             Log.e(TAG, "Error al procesar JSON: ${e.message}", e)
 
-                            // Intentar mostrar el JSON que causó el error
+
                             Log.e(TAG, "JSON que causó el error: $responseBody")
 
                             _loginResult.postValue(Result.failure(Exception("Error al procesar la respuesta del servidor: ${e.message}")))
@@ -121,7 +119,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                         }
                     },
                     onFailure = { error ->
-                        // Personalizar mensaje según el tipo de error
+
                         val mensaje = when (error) {
                             is UnknownHostException -> "No se pudo conectar al servidor. Verifique su conexión a Internet."
                             is ConnectException -> "Error de conexión al servidor. El servidor puede estar caído."
@@ -134,23 +132,23 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 )
             } catch (e: CancellationException) {
-                // Las excepciones de cancelación de coroutine no deben ser capturadas como errores
+
                 throw e
             } catch (e: Exception) {
-                // Cualquier otra excepción durante la petición
+
                 Log.e(TAG, "Error general de conexión: ${e.message}", e)
                 _loginResult.postValue(Result.failure(Exception("Error de conexión: ${e.message}")))
             } finally {
-                // Siempre deshabilitar el estado de carga
+
                 _isLoading.postValue(false)
                 Log.d(TAG, "Proceso de login finalizado")
             }
         }
     }
 
-    // Método auxiliar para manejar diferentes formatos de JSON
+
     private fun extractUserId(jsonResponse: JSONObject): Int {
-        // Intentar con ambos formatos posibles para mayor robustez
+
         val usuarioId = when {
             jsonResponse.has("usuario_id") -> jsonResponse.optInt("usuario_id", 0)
             jsonResponse.has("usuarioId") -> jsonResponse.optInt("usuarioId", 0)
@@ -158,7 +156,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         if (usuarioId == 0) {
-            // Registrar todos los campos disponibles para debug
+
             val keys = jsonResponse.keys()
             val availableFields = mutableListOf<String>()
             while (keys.hasNext()) {
@@ -170,7 +168,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
         return usuarioId
     }
 
-    // Factory para crear instancias del ViewModel con el contexto de la aplicación
+
     class Factory(private val application: Application) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {

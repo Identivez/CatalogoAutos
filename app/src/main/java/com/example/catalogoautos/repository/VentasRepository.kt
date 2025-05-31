@@ -33,17 +33,17 @@ class VentasRepository(private val context: Context) : CoroutineScope {
         get() = Dispatchers.Main
 
     private val TAG = "VentasRepository"
-    private val BASE_URL = "http://192.168.1.2:8080/AE_BYD/api"
+    private val BASE_URL = "http://10.250.3.8:8080/AE_BYD/api"
     private val client = OkHttpClient()
 
-    // Constantes para los estados de venta
+
     companion object {
-        // Estados válidos según la restricción check de la base de datos
+
         const val ESTADO_PENDIENTE = "PENDIENTE"
         const val ESTADO_ENTREGADA = "ENTREGADA"
         const val ESTADO_CANCELADA = "CANCELADA"
 
-        // Lista de estados válidos para referencia
+
         val ESTADOS_VALIDOS = listOf(ESTADO_PENDIENTE, ESTADO_ENTREGADA, ESTADO_CANCELADA)
 
         @Volatile
@@ -67,7 +67,7 @@ class VentasRepository(private val context: Context) : CoroutineScope {
             val precioStr = map["precio"]?.toString() ?: "0"
             val estatus = map["estatus"]?.toString() ?: ESTADO_PENDIENTE
 
-            // Parsear fecha
+
             val fechaStr = map["fechaVenta"]?.toString() ?: LocalDateTime.now().toString()
             val fecha = try {
                 if (fechaStr.contains("T")) {
@@ -97,7 +97,7 @@ class VentasRepository(private val context: Context) : CoroutineScope {
         }
     }
 
-    // Obtener todas las ventas
+
     fun getAllVentas(callback: (List<Venta>?, String?) -> Unit) {
         launch {
             try {
@@ -120,7 +120,7 @@ class VentasRepository(private val context: Context) : CoroutineScope {
         }
     }
 
-    // Obtener venta por ID
+
     fun getVentaById(id: Int, callback: (Venta?, String?) -> Unit) {
         launch {
             try {
@@ -142,7 +142,6 @@ class VentasRepository(private val context: Context) : CoroutineScope {
         }
     }
 
-    // Obtener ventas por estatus
     fun getVentasByEstatus(estatus: String, callback: (List<Venta>?, String?) -> Unit) {
         launch {
             try {
@@ -167,16 +166,16 @@ class VentasRepository(private val context: Context) : CoroutineScope {
         }
     }
 
-    // Registrar venta
+
     fun registrarVenta(nSerie: String, cantidad: Int, precio: BigDecimal, callback: (Venta?, String?) -> Unit) {
         launch {
             try {
-                // Crear una instancia de VentaRequest con el estatus PENDIENTE
+
                 val ventaRequest = VentaRequest(
                     nSerie = nSerie,
                     cantidad = cantidad,
                     precio = precio,
-                    estatus = ESTADO_PENDIENTE // Usar el valor válido según la restricción check
+                    estatus = ESTADO_PENDIENTE
                 )
 
                 Log.d(TAG, "Enviando registro de venta con estado: ${ventaRequest.estatus}")
@@ -191,10 +190,10 @@ class VentasRepository(private val context: Context) : CoroutineScope {
                 } else {
                     var errorMsg = "Error del servidor: ${response.code()}"
                     try {
-                        // Intentar extraer el mensaje de error de forma más limpia
+
                         val errorBody = response.errorBody()?.string()
                         if (!errorBody.isNullOrEmpty()) {
-                            // Intentar extraer solo el mensaje relevante del HTML/texto
+
                             val cleanError = extractCleanErrorMessage(errorBody)
                             if (cleanError.isNotEmpty()) {
                                 errorMsg = cleanError
@@ -216,11 +215,11 @@ class VentasRepository(private val context: Context) : CoroutineScope {
         }
     }
 
-    // Actualizar estatus
+
     fun actualizarEstatus(id: Int, estatus: String, callback: (Venta?, String?) -> Unit) {
         launch {
             try {
-                // Validar que el estatus proporcionado sea válido
+
                 val estatusValido = if (estatus in ESTADOS_VALIDOS) estatus else ESTADO_PENDIENTE
 
                 val estatusMap = mapOf("estatus" to estatusValido)
@@ -258,7 +257,7 @@ class VentasRepository(private val context: Context) : CoroutineScope {
         }
     }
 
-    // Cancelar venta
+
     fun cancelarVenta(id: Int, callback: (Boolean, String?) -> Unit) {
         launch {
             try {
@@ -292,7 +291,6 @@ class VentasRepository(private val context: Context) : CoroutineScope {
         }
     }
 
-    // Contar ventas por estatus
     fun contarVentas(callback: (Map<String, Int>?, String?) -> Unit) {
         launch {
             try {
@@ -304,7 +302,7 @@ class VentasRepository(private val context: Context) : CoroutineScope {
                     val counts = response.body()
                     val countsMap = mutableMapOf<String, Int>()
 
-                    // Función auxiliar para extraer números de forma segura
+
                     fun safeExtractInt(value: Any?): Int {
                         return when (value) {
                             null -> 0
@@ -315,17 +313,16 @@ class VentasRepository(private val context: Context) : CoroutineScope {
                         }
                     }
 
-                    // Extraer valores con la función auxiliar
+
                     if (counts != null) {
                         countsMap["total"] = safeExtractInt(counts["total"])
                         countsMap["pendientes"] = safeExtractInt(counts["pendientes"])
                         countsMap["entregadas"] = safeExtractInt(counts["entregadas"])
                         countsMap["canceladas"] = safeExtractInt(counts["canceladas"])
-                        // Usamos "completadas" para mantener compatibilidad con el código existente,
-                        // pero en realidad podría no existir este campo si la DB no lo permite
+
                         countsMap["completadas"] = safeExtractInt(counts["completadas"])
                     } else {
-                        // Valores por defecto
+
                         countsMap["total"] = 0
                         countsMap["pendientes"] = 0
                         countsMap["entregadas"] = 0
@@ -366,7 +363,7 @@ class VentasRepository(private val context: Context) : CoroutineScope {
             }
         }
 
-        // Si no podemos extraer un mensaje específico, devolver un mensaje genérico
+
         if (htmlResponse.contains("ventas_estatus_check")) {
             return "El estado proporcionado no es válido. Por favor, use uno de los siguientes: ${ESTADOS_VALIDOS.joinToString()}"
         }
@@ -374,13 +371,13 @@ class VentasRepository(private val context: Context) : CoroutineScope {
         return "Error al procesar la solicitud. Por favor, inténtalo de nuevo."
     }
 
-    // Interfaz para el callback de ventas
+
     interface VentasCallback {
         fun onVentasRecibidas(ventas: List<Venta>)
         fun onError(mensaje: String)
     }
 
-    // Método para obtener ventas por filtro con coroutines
+
     fun getVentasPorFiltro(
         fechaInicio: LocalDateTime,
         fechaFin: LocalDateTime,
@@ -422,7 +419,7 @@ class VentasRepository(private val context: Context) : CoroutineScope {
         }
     }
 
-    // Método para parsear la respuesta JSON a lista de ventas
+
     private fun parsearRespuesta(jsonResponse: String?): List<Venta> {
         if (jsonResponse.isNullOrEmpty()) return emptyList()
 
@@ -438,29 +435,29 @@ class VentasRepository(private val context: Context) : CoroutineScope {
                 val precio = BigDecimal(jsonObject.getString("precio"))
                 val estatus = jsonObject.getString("estatus")
 
-                // Parsear fecha usando exclusivamente SimpleDateFormat
+
                 val fechaStr = jsonObject.getString("fechaVenta")
                 val fecha = try {
-                    // Usamos SimpleDateFormat que es más flexible con los formatos
+
                     val sdf = SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.US)
                     val date = sdf.parse(fechaStr)
 
-                    // Convertir a LocalDateTime para mantener compatibilidad con tu modelo de datos
+
                     val instant = date.toInstant()
                     LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
                 } catch (e: Exception) {
                     Log.e(TAG, "Error con SimpleDateFormat, intentando formatos alternativos para: $fechaStr", e)
 
-                    // Intentar con formatos alternativos si el principal falla
+
                     try {
                         if (fechaStr.contains("T")) {
-                            // Formato ISO
+
                             LocalDateTime.parse(fechaStr, DateTimeFormatter.ISO_DATE_TIME)
                         } else if (fechaStr.contains("-") && !fechaStr.contains(":")) {
-                            // Formato simple yyyy-MM-dd
+
                             LocalDate.parse(fechaStr).atStartOfDay()
                         } else {
-                            // Si nada funciona, usar hora actual
+
                             Log.e(TAG, "No se pudo parsear la fecha: $fechaStr, usando fecha actual", e)
                             LocalDateTime.now()
                         }

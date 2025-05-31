@@ -3,7 +3,7 @@ package com.example.catalogoautos.network
 import retrofit2.Response
 import retrofit2.http.*
 
-// Definir un tipo específico para el mapa
+
 typealias AutoMap = HashMap<String, Any>
 
 interface AutoApi {
@@ -72,4 +72,12 @@ interface AutoApi {
      */
     @GET("auto/contar")
     suspend fun contarAutos(): Response<Map<String, Long>>
+    /**
+     * Verificar disponibilidad de un auto por SKU
+     */
+    @GET("auto/verificar-disponibilidad/{sku}/{cantidad}")
+    suspend fun verificarDisponibilidadPorSku(
+        @Path("sku") sku: String,
+        @Path("cantidad") cantidad: Int
+    ): Response<Map<String, Any>>
 }

@@ -24,7 +24,6 @@ class MenuActivity : AppCompatActivity() {
     private lateinit var cardAgregarAuto: CardView
     private lateinit var cardInventario: CardView
     private lateinit var cardCatalogo: CardView
-    // Declaramos las variables opcionales
     private var cardVentas: CardView? = null
 
     private lateinit var viewModel: MenuViewModel
@@ -38,7 +37,7 @@ class MenuActivity : AppCompatActivity() {
             supportActionBar?.hide()
             setContentView(R.layout.activity_menu)
 
-            // Inicializar ViewModel con la Factory actualizada que incluye las dependencias
+
             viewModel = ViewModelProvider(
                 this,
                 MenuViewModel.Factory(
@@ -48,13 +47,13 @@ class MenuActivity : AppCompatActivity() {
                 )
             ).get(MenuViewModel::class.java)
 
-            // Configurar referencias a vistas
+
             initializeViews()
 
-            // Configurar observadores
+
             setupObservers()
 
-            // Configurar listeners
+
             setupClickListeners()
 
             Log.d(TAG, "MenuActivity onCreate completado exitosamente")
@@ -62,7 +61,7 @@ class MenuActivity : AppCompatActivity() {
             Log.e(TAG, "Error en onCreate: ${e.message}", e)
             Toast.makeText(this, "Error al iniciar el menú principal: ${e.message}", Toast.LENGTH_LONG).show()
 
-            // En caso de error grave, volvemos a la pantalla de login
+
             try {
                 val intent = Intent(this, LoginActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -84,22 +83,22 @@ class MenuActivity : AppCompatActivity() {
             cardInventario = findViewById(R.id.cardInventario)
             cardCatalogo = findViewById(R.id.cardCatalogo)
 
-            // Intentamos inicializar la card de ventas, pero no fallamos si no existe
+
             try {
                 cardVentas = findViewById(R.id.cardVentas)
                 Log.d(TAG, "Card de ventas inicializada correctamente")
             } catch (e: Exception) {
                 Log.w(TAG, "La card de ventas no existe en el layout: ${e.message}")
-                // No hacemos throw aquí para que la app siga funcionando
+
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error al inicializar vistas: ${e.message}", e)
-            throw e  // Relanzamos la excepción para manejarla en onCreate
+            throw e
         }
     }
 
     private fun setupObservers() {
-        // Observar el usuario actual para mostrar mensaje de bienvenida
+
         lifecycleScope.launch {
             try {
                 viewModel.usuarioActual.collect { nombreUsuario ->
@@ -114,7 +113,7 @@ class MenuActivity : AppCompatActivity() {
                             finish()
                         } catch (e: Exception) {
                             Log.e(TAG, "Error al redirigir a login: ${e.message}", e)
-                            finish()  // Si falla la redirección, al menos cerramos esta actividad
+                            finish()
                         }
                     } else {
                         try {
@@ -129,7 +128,7 @@ class MenuActivity : AppCompatActivity() {
             }
         }
 
-        // Observar el total de autos
+
         lifecycleScope.launch {
             try {
                 viewModel.totalAutos.collect { total ->
@@ -147,7 +146,7 @@ class MenuActivity : AppCompatActivity() {
 
     private fun setupClickListeners() {
         try {
-            // Configurar listeners para los cards
+
             cardAgregarAuto.setOnClickListener {
                 try {
                     Log.d(TAG, "Iniciando AgregarAutoActivity")
@@ -179,12 +178,12 @@ class MenuActivity : AppCompatActivity() {
                 }
             }
 
-            // Configurar listener para la card de ventas si existe
+
             cardVentas?.setOnClickListener {
                 showVentasOptions()
             }
 
-            // Listener para el botón de logout
+
             btnLogout.setOnClickListener {
                 try {
                     Log.d(TAG, "Cerrando sesión")
@@ -193,7 +192,7 @@ class MenuActivity : AppCompatActivity() {
                     Log.e(TAG, "Error al cerrar sesión: ${e.message}", e)
                     Toast.makeText(this, "Error al cerrar sesión: ${e.message}", Toast.LENGTH_SHORT).show()
 
-                    // Intento forzado de volver a login en caso de error
+
                     try {
                         val intent = Intent(this, LoginActivity::class.java)
                         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -206,7 +205,7 @@ class MenuActivity : AppCompatActivity() {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error al configurar click listeners: ${e.message}", e)
-            throw e  // Relanzamos la excepción para manejarla en onCreate
+            throw e
         }
     }
 
@@ -222,7 +221,7 @@ class MenuActivity : AppCompatActivity() {
                 .setItems(options) { dialog, which ->
                     when (which) {
                         0 -> {
-                            // Opción de gestión de ventas
+
                             try {
                                 Log.d(TAG, "Iniciando VentasActivity")
                                 startActivity(Intent(this, VentasActivity::class.java))
@@ -232,7 +231,7 @@ class MenuActivity : AppCompatActivity() {
                             }
                         }
                         1 -> {
-                            // Opción de reportes
+
                             try {
                                 Log.d(TAG, "Iniciando ReportesActivity")
                                 startActivity(Intent(this, ReportesActivity::class.java))
@@ -248,7 +247,7 @@ class MenuActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e(TAG, "Error al mostrar opciones de ventas: ${e.message}", e)
 
-            // En caso de error, intentamos ir directamente a VentasActivity como fallback
+
             try {
                 startActivity(Intent(this, VentasActivity::class.java))
             } catch (ex: Exception) {

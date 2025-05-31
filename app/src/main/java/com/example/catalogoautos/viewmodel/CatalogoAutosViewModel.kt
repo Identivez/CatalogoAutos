@@ -14,46 +14,45 @@ import kotlinx.coroutines.launch
 
 class CatalogoAutosViewModel(private val repository: AutoRepository) : ViewModel() {
 
-    // Enumeración para definir por qué campo se está filtrando la búsqueda de texto
+
     enum class TipoBusqueda {
         MODELO, NUMERO_SERIE, SKU, COLOR, TODOS
     }
 
-    // Filtros básicos
+
     private val _searchQuery = MutableStateFlow("")
-    private val _tipoBusqueda = MutableStateFlow(TipoBusqueda.MODELO) // Por defecto, buscar por modelo
-    private val _disponibilidadFiltro = MutableStateFlow<Boolean?>(null) // null = todos
+    private val _tipoBusqueda = MutableStateFlow(TipoBusqueda.MODELO)
+    private val _disponibilidadFiltro = MutableStateFlow<Boolean?>(null)
     private val _precioMinimo = MutableStateFlow<Double?>(null)
     private val _precioMaximo = MutableStateFlow<Double?>(null)
     private val _anioMinimo = MutableStateFlow<Int?>(null)
     private val _anioMaximo = MutableStateFlow<Int?>(null)
 
-    // Estado de carga
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    // Estado de error
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
-    // Estado de filtros activos - útil para la UI
+
     private val _hayFiltrosActivos = MutableStateFlow(false)
     val hayFiltrosActivos: StateFlow<Boolean> = _hayFiltrosActivos
 
-    // Lista de autos filtrada
+
     private val _autos = MutableStateFlow<List<Auto>>(emptyList())
     val autos = _autos.asStateFlow()
 
-    // Inicializar observadores
+
     init {
-        // Observar cambios en repository.autos
+
         viewModelScope.launch {
             repository.autos.collect { listaAutos ->
                 aplicarFiltros()
             }
         }
 
-        // Observar cambios en filtros
+
         viewModelScope.launch {
             _searchQuery.collect { aplicarFiltros() }
         }
@@ -77,7 +76,7 @@ class CatalogoAutosViewModel(private val repository: AutoRepository) : ViewModel
         }
     }
 
-    // Aplicar filtros cuando cambia cualquier criterio
+
     private fun aplicarFiltros() {
         viewModelScope.launch {
             _isLoading.value = true
@@ -92,7 +91,7 @@ class CatalogoAutosViewModel(private val repository: AutoRepository) : ViewModel
                 val anioMax = _anioMaximo.value
 
                 val filteredAutos = listaAutos.filter { auto ->
-                    // Filtrar por término de búsqueda según el campo seleccionado
+
                     val matchesQuery = query.isEmpty() || when (tipo) {
                         TipoBusqueda.MODELO -> auto.modelo.contains(query, ignoreCase = true)
                         TipoBusqueda.NUMERO_SERIE -> auto.n_serie.contains(query, ignoreCase = true)
@@ -104,25 +103,25 @@ class CatalogoAutosViewModel(private val repository: AutoRepository) : ViewModel
                                 auto.color.contains(query, ignoreCase = true)
                     }
 
-                    // Filtrar por disponibilidad
+
                     val matchesDisponibilidad = disponibilidad == null ||
                             auto.disponibilidad == disponibilidad
 
-                    // Filtrar por rango de precio
+
                     val matchesPrecioMin = precioMin == null || auto.precio >= precioMin
                     val matchesPrecioMax = precioMax == null || auto.precio <= precioMax
 
-                    // Filtrar por rango de año
+
                     val matchesAnioMin = anioMin == null || auto.anio >= anioMin
                     val matchesAnioMax = anioMax == null || auto.anio <= anioMax
 
-                    // Todos los filtros deben cumplirse
+
                     matchesQuery && matchesDisponibilidad &&
                             matchesPrecioMin && matchesPrecioMax &&
                             matchesAnioMin && matchesAnioMax
                 }
 
-                // Actualizar el estado de filtros activos
+
                 _hayFiltrosActivos.value = query.isNotEmpty() ||
                         disponibilidad != null ||
                         precioMin != null ||
@@ -140,7 +139,7 @@ class CatalogoAutosViewModel(private val repository: AutoRepository) : ViewModel
         }
     }
 
-    // Estadísticas del catálogo - útiles para la UI
+
     val estadisticasCatalogo = repository.autos.map { listaAutos ->
         val totalAutos = listaAutos.size
         val autosDisponibles = listaAutos.count { it.disponibilidad }
@@ -159,7 +158,7 @@ class CatalogoAutosViewModel(private val repository: AutoRepository) : ViewModel
         )
     }
 
-    // Extracción de valores únicos para los filtros
+
     val coloresDisponibles = repository.autos.map { autos ->
         autos.map { it.color }
             .filter { it.isNotBlank() }
@@ -184,7 +183,7 @@ class CatalogoAutosViewModel(private val repository: AutoRepository) : ViewModel
         }
     }
 
-    // Métodos para actualizar filtros
+
     fun setSearchQuery(query: String) {
         _searchQuery.value = query
     }
@@ -235,7 +234,7 @@ class CatalogoAutosViewModel(private val repository: AutoRepository) : ViewModel
         _anioMaximo.value = null
     }
 
-    // Eliminar un auto
+
     fun eliminarAuto(autoId: Int) {
         viewModelScope.launch {
             try {
@@ -249,20 +248,20 @@ class CatalogoAutosViewModel(private val repository: AutoRepository) : ViewModel
         }
     }
 
-    // Búsqueda rápida por número de serie o SKU
+
     fun buscarPorIdentificador(identificador: String) {
-        // Intentamos primero con SKU (más corto)
+
         if (identificador.length <= 10) {
             _searchQuery.value = identificador
             _tipoBusqueda.value = TipoBusqueda.SKU
         } else {
-            // Si es más largo, probablemente sea un número de serie
+
             _searchQuery.value = identificador
             _tipoBusqueda.value = TipoBusqueda.NUMERO_SERIE
         }
     }
 
-    // Factory para crear el ViewModel con el repositorio
+
     class Factory(private val context: Context) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {

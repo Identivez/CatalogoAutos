@@ -1,4 +1,4 @@
-// VentasActivity.kt
+
 package com.example.catalogoautos.view
 
 import Venta
@@ -27,34 +27,34 @@ class VentasActivity : AppCompatActivity() {
         binding = ActivityVentasBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Ocultar la barra de acción si existe
+
         supportActionBar?.hide()
 
-        // Inicializar ViewModel
+
         viewModel = ViewModelProvider(this, VentasViewModel.Factory(application))[VentasViewModel::class.java]
 
-        // Configurar RecyclerView
+
         setupRecyclerView()
 
-        // Configurar filtros
+
         setupFilters()
 
-        // Configurar botón flotante para agregar venta
+
         binding.fabAgregarVenta.setOnClickListener {
             val intent = Intent(this, RegistrarVentaActivity::class.java)
             startActivity(intent)
         }
 
-        // Observar cambios en el ViewModel
+
         observeViewModel()
 
-        // Cargar las ventas
+
         viewModel.obtenerTodasLasVentas()
     }
 
     private fun setupRecyclerView() {
         adaptador = VentasAdapter { venta ->
-            // Al hacer clic en una venta, abrir detalles
+
             val intent = Intent(this, DetalleVentaActivity::class.java)
             intent.putExtra("VENTA_ID", venta.ventaId)
             startActivity(intent)
@@ -69,11 +69,11 @@ class VentasActivity : AppCompatActivity() {
     private fun setupFilters() {
         binding.spinnerFiltro.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                // No hacer nada, esperar el click del botón
+
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
-                // No hacer nada
+
             }
         }
 
@@ -93,7 +93,7 @@ class VentasActivity : AppCompatActivity() {
     }
 
     private fun observeViewModel() {
-        // Observar lista de ventas
+
         viewModel.ventas.observe(this) { ventas ->
             if (ventas != null) {
                 adaptador.actualizarVentas(ventas)
@@ -102,19 +102,19 @@ class VentasActivity : AppCompatActivity() {
             }
         }
 
-        // Observar estado de carga
+
         viewModel.isLoading.observe(this) { estaCargando ->
             binding.progressBar.visibility = if (estaCargando) View.VISIBLE else View.GONE
         }
 
-        // Observar errores
+
         viewModel.error.observe(this) { mensaje ->
             if (!mensaje.isNullOrEmpty()) {
                 Toast.makeText(this, mensaje, Toast.LENGTH_LONG).show()
             }
         }
 
-        // Observar mensajes de éxito
+
         viewModel.success.observe(this) { mensaje ->
             if (!mensaje.isNullOrEmpty()) {
                 Toast.makeText(this, mensaje, Toast.LENGTH_SHORT).show()
@@ -128,7 +128,7 @@ class VentasActivity : AppCompatActivity() {
     }
 
     private fun actualizarEstadisticas(ventas: List<Venta>) {
-        // Actualizar estadísticas
+
         val totalVentas = ventas.size
         val ventasCompletadas = ventas.count { it.estatus == "COMPLETADA" || it.estatus == "ENTREGADA" }
         val ventasPendientes = ventas.count { it.estatus == "PENDIENTE" }
@@ -140,7 +140,7 @@ class VentasActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Recargar ventas al volver a la pantalla
+
         viewModel.obtenerTodasLasVentas()
     }
 }

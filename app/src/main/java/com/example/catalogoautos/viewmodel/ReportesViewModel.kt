@@ -23,13 +23,12 @@ class ReportesViewModel(application: Application) : AndroidViewModel(application
             }
 
             override fun onError(mensaje: String) {
-                // Manejar error
+
                 _ventas.postValue(emptyList())
             }
         })
     }
 
-    // Factory para proveer el Application al ViewModel
     class Factory(private val application: Application) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(ReportesViewModel::class.java)) {

@@ -30,7 +30,7 @@ class AutoRepository(private val context: Context) {
 
     private val TAG = "AutoRepository"
 
-    // Configuración de Gson con adaptadores personalizados para LocalDateTime
+
     private val gson: Gson = GsonBuilder()
         .registerTypeAdapter(LocalDateTime::class.java, LocalDateTimeSerializer())
         .registerTypeAdapter(LocalDateTime::class.java, LocalDateTimeDeserializer())
@@ -40,18 +40,18 @@ class AutoRepository(private val context: Context) {
         "autos_preferences", Context.MODE_PRIVATE
     )
 
-    // El StateFlow interno que mantenemos actualizado
+
     private val _autos = MutableStateFlow<List<Auto>>(emptyList())
 
-    // La versión pública e inmutable que exponemos
+
     val autos: Flow<List<Auto>> = _autos.asStateFlow()
 
     init {
-        // Cargar los autos guardados cuando se inicializa el repositorio
+
         cargarAutosGuardados()
     }
 
-    // Adaptador para serializar LocalDateTime a JSON
+
     private class LocalDateTimeSerializer : JsonSerializer<LocalDateTime> {
         override fun serialize(
             src: LocalDateTime,
@@ -62,7 +62,7 @@ class AutoRepository(private val context: Context) {
         }
     }
 
-    // Adaptador para deserializar JSON a LocalDateTime
+
     private class LocalDateTimeDeserializer : JsonDeserializer<LocalDateTime> {
         override fun deserialize(
             json: JsonElement,
@@ -73,7 +73,7 @@ class AutoRepository(private val context: Context) {
         }
     }
 
-    // Función para cargar los autos guardados desde SharedPreferences
+
     private fun cargarAutosGuardados() {
         try {
             val autosJson = sharedPreferences.getString(AUTOS_KEY, null)
@@ -89,12 +89,12 @@ class AutoRepository(private val context: Context) {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error al cargar autos: ${e.message}", e)
-            // Si hay un error al cargar, inicializamos con una lista vacía
+
             _autos.value = emptyList()
         }
     }
 
-    // Función para guardar los autos en SharedPreferences
+
     private fun guardarAutosEnPreferences() {
         try {
             val autosJson = gson.toJson(_autos.value)
@@ -102,7 +102,7 @@ class AutoRepository(private val context: Context) {
 
             sharedPreferences.edit().apply {
                 putString(AUTOS_KEY, autosJson)
-                apply() // Aplicar los cambios de forma asíncrona
+                apply()
             }
 
             Log.d(TAG, "Autos guardados correctamente")
@@ -111,13 +111,13 @@ class AutoRepository(private val context: Context) {
         }
     }
 
-    // Función para generar un nuevo ID para un auto
+
     private fun generarNuevoId(): Int {
         val maxId = _autos.value.maxOfOrNull { it.auto_id } ?: 0
         return maxId + 1
     }
 
-    // Función para convertir un Auto a HashMap para la API
+
     private fun autoToMap(auto: Auto): AutoMap {
         return AutoMap().apply {
             put("auto_id", auto.auto_id)
@@ -136,7 +136,7 @@ class AutoRepository(private val context: Context) {
         }
     }
 
-    // Función para convertir un Map de la API a Auto
+
     private fun mapToAuto(map: Map<String, Any>): Auto {
         return try {
             val autoId = (map["auto_id"] as? Number)?.toInt() ?: 0
@@ -151,7 +151,7 @@ class AutoRepository(private val context: Context) {
             val descripcion = map["descripcion"]?.toString() ?: ""
             val disponibilidad = map["disponibilidad"] as? Boolean ?: true
 
-            // Parsear fechas
+
             val fechaRegistroStr = map["fecha_registro"]?.toString() ?: LocalDateTime.now().toString()
             val fechaActualizacionStr = map["fecha_actualizacion"]?.toString() ?: LocalDateTime.now().toString()
 
@@ -184,7 +184,7 @@ class AutoRepository(private val context: Context) {
             )
         } catch (e: Exception) {
             Log.e(TAG, "Error al convertir Map a Auto: ${e.message}", e)
-            Auto() // Retornar un auto vacío en caso de error
+            Auto()
         }
     }
 
@@ -194,27 +194,27 @@ class AutoRepository(private val context: Context) {
             try {
                 Log.d(TAG, "Intentando guardar auto en el servidor: ${auto.modelo}")
 
-                // Asignar un nuevo ID si es 0
+
                 val autoConId = if (auto.auto_id == 0) {
                     auto.copy(auto_id = generarNuevoId())
                 } else {
                     auto
                 }
 
-                // Convertir el auto a HashMap para la API
+
                 val autoMap = autoToMap(autoConId)
 
-                // Usar NetworkUtils para la petición
+
                 val resultado = NetworkUtils.post(ApiClient.AUTO_ENDPOINT, autoMap)
 
                 resultado.fold(
                     onSuccess = { responseBody ->
                         Log.d(TAG, "Éxito al guardar en el servidor, respuesta: $responseBody")
 
-                        // Guardar localmente también
+
                         agregarAuto(autoConId)
 
-                        // Si hay respuesta, intentar convertirla a Auto
+
                         if (responseBody.isNotEmpty()) {
                             try {
                                 val responseMap = gson.fromJson(responseBody, object : TypeToken<Map<String, Any>>() {}.type) as Map<String, Any>
@@ -231,7 +231,7 @@ class AutoRepository(private val context: Context) {
                     onFailure = { error ->
                         Log.e(TAG, "Error del servidor: ${error.message}")
 
-                        // Si el servidor falla, guardar localmente de todos modos
+
                         agregarAuto(autoConId)
                         Result.failure(Exception("Error en el servidor: ${error.message}"))
                     }
@@ -239,7 +239,7 @@ class AutoRepository(private val context: Context) {
             } catch (e: Exception) {
                 Log.e(TAG, "Error general al agregar auto: ${e.message}", e)
 
-                // Si hay excepción general, guardar localmente
+
                 val autoParaGuardar = if (auto.auto_id == 0) {
                     auto.copy(auto_id = generarNuevoId())
                 } else {
@@ -257,10 +257,10 @@ class AutoRepository(private val context: Context) {
             try {
                 Log.d(TAG, "Intentando actualizar auto en el servidor: ID=${auto.auto_id}")
 
-                // Convertir el auto a HashMap para la API
+
                 val autoMap = autoToMap(auto)
 
-                // Usar NetworkUtils para la petición
+
                 val endpoint = "${ApiClient.AUTO_ENDPOINT}/${auto.auto_id}"
                 val resultado = NetworkUtils.put(endpoint, autoMap)
 
@@ -268,10 +268,10 @@ class AutoRepository(private val context: Context) {
                     onSuccess = { responseBody ->
                         Log.d(TAG, "Éxito al actualizar en el servidor, respuesta: $responseBody")
 
-                        // Actualizar localmente
+
                         actualizarAuto(auto)
 
-                        // Si hay respuesta, intentar convertirla a Auto
+
                         if (responseBody.isNotEmpty()) {
                             try {
                                 val responseMap = gson.fromJson(responseBody, object : TypeToken<Map<String, Any>>() {}.type) as Map<String, Any>
@@ -288,7 +288,7 @@ class AutoRepository(private val context: Context) {
                     onFailure = { error ->
                         Log.e(TAG, "Error del servidor al actualizar: ${error.message}")
 
-                        // Si el servidor falla, actualizar localmente de todos modos
+
                         actualizarAuto(auto)
                         Result.failure(error)
                     }
@@ -296,7 +296,7 @@ class AutoRepository(private val context: Context) {
             } catch (e: Exception) {
                 Log.e(TAG, "Error general al actualizar auto: ${e.message}", e)
 
-                // Si hay excepción, actualizar localmente
+
                 actualizarAuto(auto)
                 Result.failure(e)
             }
@@ -309,20 +309,20 @@ class AutoRepository(private val context: Context) {
             try {
                 Log.d(TAG, "Intentando sincronizar autos desde el servidor")
 
-                // Usar NetworkUtils para la petición
+
                 val resultado = NetworkUtils.get(ApiClient.AUTO_ENDPOINT)
 
                 resultado.fold(
                     onSuccess = { responseBody ->
                         try {
-                            // Convertir el JSON a lista de Autos
+
                             val listType = object : TypeToken<List<Map<String, Any>>>() {}.type
                             val listaMapas: List<Map<String, Any>> = gson.fromJson(responseBody, listType)
                             val autosServidor = listaMapas.map { mapToAuto(it) }
 
                             Log.d(TAG, "Autos sincronizados del servidor: ${autosServidor.size}")
 
-                            // Actualizar la caché local
+
                             _autos.value = autosServidor
                             guardarAutosEnPreferences()
 
@@ -350,7 +350,7 @@ class AutoRepository(private val context: Context) {
             try {
                 Log.d(TAG, "Intentando eliminar auto del servidor: ID=$autoId")
 
-                // Usar NetworkUtils para la petición
+
                 val endpoint = "${ApiClient.AUTO_ENDPOINT}/$autoId"
                 val resultado = NetworkUtils.delete(endpoint)
 
@@ -358,7 +358,7 @@ class AutoRepository(private val context: Context) {
                     onSuccess = {
                         Log.d(TAG, "Éxito al eliminar del servidor: ID=$autoId")
 
-                        // Eliminar localmente también
+
                         eliminarAuto(autoId)
 
                         Result.success(Unit)
@@ -366,7 +366,7 @@ class AutoRepository(private val context: Context) {
                     onFailure = { error ->
                         Log.e(TAG, "Error del servidor al eliminar: ${error.message}")
 
-                        // Si el servidor falla, eliminar localmente de todos modos
+
                         eliminarAuto(autoId)
                         Result.failure(error)
                     }
@@ -374,38 +374,38 @@ class AutoRepository(private val context: Context) {
             } catch (e: Exception) {
                 Log.e(TAG, "Error general al eliminar auto: ${e.message}", e)
 
-                // Si hay excepción, eliminar localmente
+
                 eliminarAuto(autoId)
                 Result.failure(e)
             }
         }
     }
 
-    // Función para verificar si un número de serie ya existe
+
     fun existeNumeroSerie(n_serie: String, excludeId: Int = -1): Boolean {
         return _autos.value.any { it.n_serie == n_serie && it.auto_id != excludeId }
     }
 
-    // Función para verificar si un SKU ya existe
+
     fun existeSku(sku: String, excludeId: Int = -1): Boolean {
         return _autos.value.any { it.sku == sku && it.auto_id != excludeId }
     }
 
-    // Función para agregar un nuevo auto con validación de campos únicos
+
     fun agregarAuto(auto: Auto) {
-        // Validar que el número de serie sea único
+
         if (existeNumeroSerie(auto.n_serie)) {
             Log.e(TAG, "Error: El número de serie ${auto.n_serie} ya existe")
             throw IllegalArgumentException("El número de serie ya existe en otro vehículo")
         }
 
-        // Validar que el SKU sea único
+
         if (existeSku(auto.sku)) {
             Log.e(TAG, "Error: El SKU ${auto.sku} ya existe")
             throw IllegalArgumentException("El SKU ya existe en otro vehículo")
         }
 
-        // Asignar un nuevo ID si es 0 (valor por defecto)
+
         val autoConId = if (auto.auto_id == 0) {
             auto.copy(auto_id = generarNuevoId())
         } else {
@@ -420,15 +420,15 @@ class AutoRepository(private val context: Context) {
         guardarAutosEnPreferences()
     }
 
-    // Función para actualizar un auto existente con validación de campos únicos
+
     fun actualizarAuto(auto: Auto) {
-        // Validar que el número de serie sea único (excluyendo el auto actual)
+
         if (existeNumeroSerie(auto.n_serie, auto.auto_id)) {
             Log.e(TAG, "Error: El número de serie ${auto.n_serie} ya existe en otro vehículo")
             throw IllegalArgumentException("El número de serie ya existe en otro vehículo")
         }
 
-        // Validar que el SKU sea único (excluyendo el auto actual)
+
         if (existeSku(auto.sku, auto.auto_id)) {
             Log.e(TAG, "Error: El SKU ${auto.sku} ya existe en otro vehículo")
             throw IllegalArgumentException("El SKU ya existe en otro vehículo")
@@ -443,7 +443,7 @@ class AutoRepository(private val context: Context) {
         guardarAutosEnPreferences()
     }
 
-    // Función para eliminar un auto
+
     fun eliminarAuto(id: Int) {
         Log.d(TAG, "Eliminando auto con ID: $id")
         _autos.update { currentList ->
@@ -452,24 +452,23 @@ class AutoRepository(private val context: Context) {
         guardarAutosEnPreferences()
     }
 
-    // Función para obtener un auto por su ID
     fun obtenerAutoPorId(id: Int): Auto? {
         val auto = _autos.value.find { it.auto_id == id }
         Log.d(TAG, "Buscando auto con ID: $id. Encontrado: ${auto != null}")
         return auto
     }
 
-    // Función para buscar autos por número de serie
+
     fun buscarPorNumeroSerie(n_serie: String): Auto? {
         return _autos.value.find { it.n_serie.equals(n_serie, ignoreCase = true) }
     }
 
-    // Función para buscar autos por SKU
+
     fun buscarPorSku(sku: String): Auto? {
         return _autos.value.find { it.sku.equals(sku, ignoreCase = true) }
     }
 
-    // Obtener todos los autos como una lista (uso síncrono)
+
     fun obtenerTodosLosAutos(): List<Auto> {
         return _autos.value
     }
@@ -480,12 +479,43 @@ class AutoRepository(private val context: Context) {
         @Volatile
         private var INSTANCE: AutoRepository? = null
 
-        // Actualizado para requerir un contexto
+
         fun getInstance(context: Context): AutoRepository {
             return INSTANCE ?: synchronized(this) {
                 val instance = AutoRepository(context.applicationContext)
                 INSTANCE = instance
                 instance
+            }
+        }
+    }
+    // Método para verificar disponibilidad por SKU
+    suspend fun verificarDisponibilidadPorSku(sku: String, cantidad: Int): Result<Map<String, Any>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                Log.d(TAG, "Verificando disponibilidad para SKU: $sku, cantidad: $cantidad")
+
+                // Usar NetworkUtils para la petición
+                val endpoint = "${ApiClient.AUTO_ENDPOINT}/verificar-disponibilidad/$sku/$cantidad"
+                val resultado = NetworkUtils.get(endpoint)
+
+                resultado.fold(
+                    onSuccess = { responseBody ->
+                        try {
+                            val responseMap = gson.fromJson(responseBody, object : TypeToken<Map<String, Any>>() {}.type) as Map<String, Any>
+                            Result.success(responseMap)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error al procesar respuesta JSON: ${e.message}")
+                            Result.failure(e)
+                        }
+                    },
+                    onFailure = { error ->
+                        Log.e(TAG, "Error al verificar disponibilidad: ${error.message}")
+                        Result.failure(error)
+                    }
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Error general al verificar disponibilidad: ${e.message}", e)
+                Result.failure(e)
             }
         }
     }

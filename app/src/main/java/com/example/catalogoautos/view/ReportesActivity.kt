@@ -55,7 +55,7 @@ class ReportesActivity : AppCompatActivity() {
     private val calendarFin = Calendar.getInstance()
     private val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
-    // Constante para el código de solicitud de permisos
+
     companion object {
         private const val PERMISSION_REQUEST_CODE = 1001
     }
@@ -64,34 +64,33 @@ class ReportesActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_reportes)
 
-        // Inicializar ViewModel con la Factory correcta
+
         viewModel = ViewModelProvider(
             this,
             ReportesViewModel.Factory(application)
         )[ReportesViewModel::class.java]
 
-        // Configurar título y botón de regreso
+
         supportActionBar?.apply {
             title = "Reportes de Ventas"
             setDisplayHomeAsUpEnabled(true)
         }
 
-        // Inicializar vistas
         initializeViews()
 
-        // Configurar fechas por defecto (último mes)
+
         setupDefaultDates()
 
-        // Configurar adaptadores y listeners
+
         setupAdapters()
 
-        // Cargar reportes existentes
+
         cargarReportesExistentes()
 
-        // Verificar permisos para guardar archivos
+
         verificarPermisos()
 
-        // Observar datos
+
         viewModel.ventas.observe(this) { ventas ->
             onVentasLoaded(ventas)
         }
@@ -111,7 +110,7 @@ class ReportesActivity : AppCompatActivity() {
     }
 
     private fun setupDefaultDates() {
-        // Configurar fechas por defecto (último mes)
+
         calendarFin.time = java.util.Date()
         calendarInicio.time = java.util.Date()
         calendarInicio.add(Calendar.MONTH, -1)
@@ -122,19 +121,18 @@ class ReportesActivity : AppCompatActivity() {
         etFechaInicio.setText(monthAgo.format(dateFormatter))
         etFechaFin.setText(today.format(dateFormatter))
 
-        // Configurar selección de fechas
+
         etFechaInicio.setOnClickListener { showDatePicker(true) }
         etFechaFin.setOnClickListener { showDatePicker(false) }
     }
 
     private fun setupAdapters() {
-        // Configurar dropdown de estatus
+
         val estatusOpciones = arrayOf("Todos", "PENDIENTE", "COMPLETADA", "CANCELADA", "ENTREGADA")
         val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, estatusOpciones)
         acEstatus.setAdapter(adapter)
         acEstatus.setText(estatusOpciones[0], false)
 
-        // Configurar RecyclerView
         reporteAdapter = ReporteAdapter(reportesRecientes, object : ReporteAdapter.OnReporteClickListener {
             override fun onReporteClick(reporte: File) {
                 abrirReporte(reporte)
@@ -143,7 +141,7 @@ class ReportesActivity : AppCompatActivity() {
         rvReportesRecientes.layoutManager = LinearLayoutManager(this)
         rvReportesRecientes.adapter = reporteAdapter
 
-        // Botón generar reporte
+
         btnGenerarReporte.setOnClickListener { generarReporte() }
     }
 
@@ -173,7 +171,7 @@ class ReportesActivity : AppCompatActivity() {
         progressBar.visibility = View.VISIBLE
         btnGenerarReporte.isEnabled = false
 
-        // Convertir fechas de texto a LocalDateTime
+
         try {
             val fechaInicio = LocalDateTime.parse(
                 etFechaInicio.text.toString() + " 00:00:00",
@@ -184,7 +182,7 @@ class ReportesActivity : AppCompatActivity() {
                 DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
             )
 
-            // Validar que la fecha inicio no sea posterior a la fecha fin
+
             if (fechaInicio.isAfter(fechaFin)) {
                 progressBar.visibility = View.GONE
                 btnGenerarReporte.isEnabled = true
@@ -192,7 +190,7 @@ class ReportesActivity : AppCompatActivity() {
                 return
             }
 
-            // Cargar ventas según filtros
+
             viewModel.cargarVentas(fechaInicio, fechaFin, estatusFiltro)
         } catch (e: Exception) {
             progressBar.visibility = View.GONE
@@ -209,12 +207,12 @@ class ReportesActivity : AppCompatActivity() {
             return
         }
 
-        // Generar PDF en segundo plano
+
         val estatus = acEstatus.text.toString()
         val estatusFiltro = if (estatus.equals("Todos", ignoreCase = true)) null else estatus
 
         executorService.execute {
-            // Parsear fechas
+
             try {
                 val fechaInicio = LocalDateTime.parse(
                     etFechaInicio.text.toString() + " 00:00:00",
@@ -242,7 +240,7 @@ class ReportesActivity : AppCompatActivity() {
                         reporteAdapter.notifyItemInserted(0)
                         rvReportesRecientes.scrollToPosition(0)
 
-                        // Abrir el PDF
+
                         abrirReporte(pdfFile)
 
                         Toast.makeText(this, "Reporte generado con éxito", Toast.LENGTH_SHORT).show()
@@ -271,11 +269,11 @@ class ReportesActivity : AppCompatActivity() {
                 setDataAndType(fileUri, "application/pdf")
                 flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
             }
-            // Verificar si hay apps que puedan abrir PDFs
+
             if (viewIntent.resolveActivity(packageManager) != null) {
                 startActivity(viewIntent)
             } else {
-                // Ofrecer alternativas al usuario
+
                 val options = arrayOf(
                     "Guardar en Descargas",
                     "Compartir",
@@ -287,11 +285,11 @@ class ReportesActivity : AppCompatActivity() {
                     .setItems(options) { _, which ->
                         when (which) {
                             0 -> {
-                                // Guardar en Descargas
+
                                 guardarPdfEnDescargas(file)
                             }
                             1 -> {
-                                // Compartir PDF
+
                                 val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                     type = "application/pdf"
                                     putExtra(Intent.EXTRA_STREAM, fileUri)
@@ -302,14 +300,14 @@ class ReportesActivity : AppCompatActivity() {
                                 startActivity(Intent.createChooser(shareIntent, "Compartir PDF"))
                             }
                             2 -> {
-                                // Ir a Play Store para buscar visor de PDF
+
                                 val playStoreIntent = Intent(Intent.ACTION_VIEW).apply {
                                     data = Uri.parse("market://search?q=pdf viewer&c=apps")
                                 }
                                 try {
                                     startActivity(playStoreIntent)
                                 } catch (e: Exception) {
-                                    // Si Play Store no está disponible, abrir en navegador
+
                                     val webIntent = Intent(Intent.ACTION_VIEW).apply {
                                         data = Uri.parse("https://play.google.com/store/search?q=pdf viewer&c=apps")
                                     }
@@ -331,7 +329,7 @@ class ReportesActivity : AppCompatActivity() {
      */
     private fun guardarPdfEnDescargas(pdfFile: File) {
         try {
-            // Para Android 10 (API 29) y superior, usamos MediaStore
+
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
                 val contentValues = ContentValues().apply {
                     put(MediaStore.Downloads.DISPLAY_NAME, pdfFile.name)
@@ -359,7 +357,7 @@ class ReportesActivity : AppCompatActivity() {
                     Toast.makeText(this, "No se pudo guardar el archivo", Toast.LENGTH_SHORT).show()
                 }
             } else {
-                // Para Android 9 y versiones anteriores
+
                 val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
                 val destFile = File(downloadsDir, pdfFile.name)
 
@@ -369,7 +367,6 @@ class ReportesActivity : AppCompatActivity() {
                     }
                 }
 
-                // Añadir el archivo a la galería de medios
                 MediaScannerConnection.scanFile(
                     this,
                     arrayOf(destFile.absolutePath),
@@ -418,7 +415,7 @@ class ReportesActivity : AppCompatActivity() {
                     if (intent.resolveActivity(packageManager) != null) {
                         startActivity(intent)
                     } else {
-                        // Alternativa si el anterior no funciona
+
                         val altIntent = Intent(Intent.ACTION_GET_CONTENT).apply {
                             type = "*/*"
                             addCategory(Intent.CATEGORY_OPENABLE)
@@ -473,7 +470,7 @@ class ReportesActivity : AppCompatActivity() {
             reportesRecientes.clear()
             if (!files.isNullOrEmpty()) {
                 reportesRecientes.addAll(files)
-                // Ordenar por fecha de modificación (más reciente primero)
+
                 reportesRecientes.sortByDescending { it.lastModified() }
             }
 

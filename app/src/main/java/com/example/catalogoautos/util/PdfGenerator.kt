@@ -37,35 +37,35 @@ class PdfGenerator(private val context: Context) {
     ): File? {
         val fileNameDateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
 
-        // Crear documento PDF
+
         val document = PdfDocument()
 
-        // Configurar página
+
         val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4
         val page = document.startPage(pageInfo)
         val canvas = page.canvas
 
-        // Configurar pincel para dibujar
+
         val paint = Paint().apply {
             color = Color.BLACK
             textSize = 12f
         }
 
-        // Dibujar logo
+
         val logoBitmap = BitmapFactory.decodeResource(context.resources, R.drawable.byd_banner)
         logoBitmap?.let {
             val resizedLogo = Bitmap.createScaledBitmap(it, 100, 50, true)
             canvas.drawBitmap(resizedLogo, 40f, 40f, paint)
         }
 
-        // Título del reporte
+
         paint.apply {
             textSize = 18f
             isFakeBoldText = true
         }
         canvas.drawText("Reporte de Ventas", 40f, 120f, paint)
 
-        // Información del filtro
+
         paint.apply {
             textSize = 12f
             isFakeBoldText = false
@@ -77,15 +77,15 @@ class PdfGenerator(private val context: Context) {
             canvas.drawText("Estatus: $estatus", 40f, 170f, paint)
         }
 
-        // Fecha de generación
+
         val fechaGeneracion = "Fecha de generación: ${LocalDateTime.now().format(dateFormatter)}"
         canvas.drawText(fechaGeneracion, 40f, 190f, paint)
 
-        // Dibujar tabla de ventas
+
         var startY = 230f
         val rowHeight = 25f
 
-        // Encabezados de tabla
+
         paint.isFakeBoldText = true
         canvas.drawText("ID", 40f, startY, paint)
         canvas.drawText("No. Serie", 70f, startY, paint)
@@ -94,11 +94,11 @@ class PdfGenerator(private val context: Context) {
         canvas.drawText("Estatus", 350f, startY, paint)
         canvas.drawText("Fecha", 450f, startY, paint)
 
-        // Línea horizontal después de encabezados
+
         paint.strokeWidth = 1f
         canvas.drawLine(40f, startY + 5f, 555f, startY + 5f, paint)
 
-        // Datos de las ventas
+
         paint.isFakeBoldText = false
         startY += 25f
 
@@ -117,14 +117,14 @@ class PdfGenerator(private val context: Context) {
             startY += rowHeight
             total = total.add(venta.precio.multiply(BigDecimal(venta.cantidad)))
 
-            // Si llega al final de la página, crear una nueva
+
             if (startY > 800f) {
                 document.finishPage(page)
                 val newPage = document.startPage(pageInfo)
                 val newCanvas = newPage.canvas
                 startY = 40f
 
-                // Reiniciar pincel
+
                 paint.apply {
                     color = Color.BLACK
                     textSize = 12f
@@ -133,18 +133,18 @@ class PdfGenerator(private val context: Context) {
             }
         }
 
-        // Línea final
+
         canvas.drawLine(40f, startY, 555f, startY, paint)
         startY += 20f
 
-        // Total
+
         paint.isFakeBoldText = true
         canvas.drawText("Total: ${currencyFormat.format(total)}", 350f, startY, paint)
 
-        // Finalizar documento
+
         document.finishPage(page)
 
-        // Guardar documento
+
         val fileName = "Ventas_${fileNameDateFormat.format(Date())}.pdf"
         val pdfFile = File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), fileName)
 
@@ -161,14 +161,14 @@ class PdfGenerator(private val context: Context) {
         }
     }
 
-    // Método sobrecargado para aceptar también instancias de Date
+
     fun generateVentasReport(
         ventas: List<Venta>,
         fechaInicio: Date,
         fechaFin: Date,
         estatus: String?
     ): File? {
-        // Convertir Date a LocalDateTime
+
         val fechaInicioLDT = fechaInicio.toInstant()
             .atZone(ZoneId.systemDefault())
             .toLocalDateTime()

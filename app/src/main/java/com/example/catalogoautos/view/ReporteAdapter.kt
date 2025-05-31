@@ -38,7 +38,7 @@ class ReporteAdapter(
         private val tvFechaReporte: TextView = itemView.findViewById(R.id.tvFechaReporte)
 
         fun bind(reporte: File, listener: OnReporteClickListener) {
-            // Extraer fecha del nombre del archivo (formato: Ventas_yyyyMMdd_HHmmss.pdf)
+
             val nombreArchivo = reporte.name
             try {
                 if (nombreArchivo.startsWith("Ventas_") && nombreArchivo.length > 21) {

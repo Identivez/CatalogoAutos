@@ -18,11 +18,11 @@ import java.util.concurrent.TimeUnit
 
 class DetalleAutoViewModel(private val repository: AutoRepository) : ViewModel() {
 
-    // LiveData para el auto seleccionado
+
     private val _auto = MutableLiveData<Auto?>(null)
     val auto: LiveData<Auto?> = _auto
 
-    // LiveData para mostrar información formateada
+
     private val _precio = MutableLiveData<String>("")
     val precio: LiveData<String> = _precio
 
@@ -32,26 +32,25 @@ class DetalleAutoViewModel(private val repository: AutoRepository) : ViewModel()
     private val _fechaActualizacion = MutableLiveData<String>("")
     val fechaActualizacion: LiveData<String> = _fechaActualizacion
 
-    // LiveData para controlar el estado de la UI
     private val _isLoading = MutableLiveData<Boolean>(false)
     val isLoading: LiveData<Boolean> = _isLoading
 
     private val _error = MutableLiveData<String?>(null)
     val error: LiveData<String?> = _error
 
-    // Cliente HTTP para comunicación con el servidor
+
     private val client = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(15, TimeUnit.SECONDS)
         .build()
 
-    // URL base del servidor
+
     private val serverUrl = "http://192.168.1.18:8080/ae_byd/api/auto"
 
-    // Formateador de fechas
+
     private val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
 
-    // Cargar auto desde el servidor
+
     fun cargarAuto(autoId: Int) {
         _isLoading.value = true
         _error.value = null
@@ -70,7 +69,7 @@ class DetalleAutoViewModel(private val repository: AutoRepository) : ViewModel()
                 if (response.isSuccessful && responseBody != null) {
                     val jsonObject = JSONObject(responseBody)
 
-                    // Crear un objeto Auto con los datos recibidos
+
                     val auto = Auto(
                         auto_id = jsonObject.getInt("auto_id"),
                         n_serie = jsonObject.getString("n_serie"),
@@ -87,20 +86,20 @@ class DetalleAutoViewModel(private val repository: AutoRepository) : ViewModel()
                         fecha_actualizacion = parseFechaFromString(jsonObject.getString("fecha_actualizacion"))
                     )
 
-                    // Actualizar los LiveData
+
                     _auto.postValue(auto)
                     _precio.postValue(formatearPrecio(auto.precio))
                     _fechaRegistro.postValue(formatearFecha(auto.fecha_registro))
                     _fechaActualizacion.postValue(formatearFecha(auto.fecha_actualizacion))
 
-                    // También actualizamos la copia local para tener respaldo
+
                     try {
                         repository.actualizarAuto(auto)
                     } catch (e: Exception) {
                         Log.e("DetalleAutoViewModel", "Error al actualizar copia local: ${e.message}")
                     }
                 } else {
-                    // Error: No se pudo cargar el auto desde el servidor
+
                     Log.e("DetalleAutoViewModel", "Error del servidor: ${response.code}")
 
                     // Intentar obtener desde repositorio local
@@ -117,7 +116,7 @@ class DetalleAutoViewModel(private val repository: AutoRepository) : ViewModel()
             } catch (e: Exception) {
                 Log.e("DetalleAutoViewModel", "Error al cargar auto: ${e.message}")
 
-                // Intentar cargar desde repositorio local
+
                 try {
                     val autoLocal = repository.obtenerAutoPorId(autoId)
                     if (autoLocal != null) {
@@ -137,7 +136,7 @@ class DetalleAutoViewModel(private val repository: AutoRepository) : ViewModel()
         }
     }
 
-    // Actualizar disponibilidad de un auto
+
     fun actualizarDisponibilidad(autoId: Int, disponible: Boolean) {
         _isLoading.value = true
         _error.value = null
@@ -153,7 +152,7 @@ class DetalleAutoViewModel(private val repository: AutoRepository) : ViewModel()
                 val response = client.newCall(request).execute()
 
                 if (response.isSuccessful) {
-                    // Actualizar el auto local
+
                     val autoActual = _auto.value
                     if (autoActual != null) {
                         val autoActualizado = autoActual.copy(
@@ -164,7 +163,7 @@ class DetalleAutoViewModel(private val repository: AutoRepository) : ViewModel()
                         _auto.postValue(autoActualizado)
                         _fechaActualizacion.postValue(formatearFecha(autoActualizado.fecha_actualizacion))
 
-                        // Actualizar copia local
+
                         try {
                             repository.actualizarAuto(autoActualizado)
                         } catch (e: Exception) {
@@ -172,7 +171,7 @@ class DetalleAutoViewModel(private val repository: AutoRepository) : ViewModel()
                         }
                     }
 
-                    // Volver a cargar el auto para asegurar datos actualizados
+
                     cargarAuto(autoId)
                 } else {
                     _error.postValue("Error al actualizar disponibilidad: ${response.code}")
@@ -181,7 +180,6 @@ class DetalleAutoViewModel(private val repository: AutoRepository) : ViewModel()
                 Log.e("DetalleAutoViewModel", "Error al actualizar disponibilidad: ${e.message}")
                 _error.postValue("Error al actualizar disponibilidad: ${e.message}")
 
-                // Intentar actualizar localmente como respaldo
                 try {
                     val autoActual = _auto.value
                     if (autoActual != null) {
@@ -203,14 +201,14 @@ class DetalleAutoViewModel(private val repository: AutoRepository) : ViewModel()
         }
     }
 
-    // Parsear fecha desde string
+
     private fun parseFechaFromString(fechaStr: String): LocalDateTime {
         return try {
-            // Intentar varios formatos de fecha
+
             if (fechaStr.contains("T")) {
                 LocalDateTime.parse(fechaStr)
             } else {
-                // Intentar con formato de timestamp SQL
+
                 val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
                 LocalDateTime.parse(fechaStr, formatter)
             }
@@ -220,28 +218,25 @@ class DetalleAutoViewModel(private val repository: AutoRepository) : ViewModel()
         }
     }
 
-    // Formatear precio para visualización
     private fun formatearPrecio(precio: Double): String {
         return "$${String.format("%,.2f", precio)}"
     }
 
-    // Formatear fecha para visualización
     private fun formatearFecha(fecha: LocalDateTime): String {
         return fecha.format(dateFormatter)
     }
 
-    // Verificar si hay stock disponible
+
     fun hayStockDisponible(): Boolean {
         return _auto.value?.stock ?: 0 > 0
     }
 
-    // Verificar si debe mostrar indicador de nuevo campo
+
     fun debeMostrarIndicadorNuevoCampo(campo: String): Boolean {
-        // Por ejemplo, marcar nuevos campos (n_serie y sku) durante 30 días
+
         return campo == "n_serie" || campo == "sku"
     }
 
-    // Factory para crear el ViewModel con el repositorio
     class Factory(private val repository: AutoRepository) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {

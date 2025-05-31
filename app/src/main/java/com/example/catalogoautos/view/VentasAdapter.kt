@@ -35,7 +35,7 @@ class VentasAdapter(
     override fun onBindViewHolder(holder: VentaViewHolder, position: Int) {
         val venta = ventas[position]
 
-        // Formatear datos
+
         val formatoPrecio = NumberFormat.getCurrencyInstance(Locale("es", "MX"))
         val formatoFecha = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
 
@@ -45,7 +45,7 @@ class VentasAdapter(
         holder.tvEstatus.text = "Estado: ${venta.estatus}"
         holder.tvFecha.text = "Fecha: ${venta.fechaVenta.format(formatoFecha)}"
 
-        // Configurar colores según el estado
+
         val context = holder.itemView.context
         when (venta.estatus) {
             "COMPLETADA" -> holder.tvEstatus.setTextColor(context.getColor(android.R.color.holo_green_dark))
@@ -54,7 +54,7 @@ class VentasAdapter(
             else -> holder.tvEstatus.setTextColor(context.getColor(android.R.color.darker_gray))
         }
 
-        // Configurar click listener
+
         holder.itemView.setOnClickListener {
             onItemClick(venta)
         }
